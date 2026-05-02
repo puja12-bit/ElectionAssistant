@@ -1,0 +1,52 @@
+[
+  {
+    "id": "VOTER001",
+    "name": "Amit Sharma",
+    "relativeName": "Ramesh Sharma",
+    "age": 34,
+    "gender": "Male",
+    "boothName": "Govt High School, Sector 4",
+    "partNumber": 12,
+    "serialNumber": 451
+  },
+  {
+    "id": "VOTER002",
+    "name": "Priya Patel",
+    "relativeName": "Suresh Patel",
+    "age": 28,
+    "gender": "Female",
+    "boothName": "Community Hall, Model Town",
+    "partNumber": 8,
+    "serialNumber": 210
+  },
+  {
+    "id": "VOTER003",
+    "name": "Rahul Kumar",
+    "relativeName": "Anil Kumar",
+    "age": 45,
+    "gender": "Male",
+    "boothName": "Primary School, Gandhi Nagar",
+    "partNumber": 25,
+    "serialNumber": 89
+  },
+  {
+    "id": "VOTER004",
+    "name": "Sunita Devi",
+    "relativeName": "Mohan Lal",
+    "age": 52,
+    "gender": "Female",
+    "boothName": "Panchayat Bhavan, Village Kheri",
+    "partNumber": 3,
+    "serialNumber": 112
+  },
+  {
+    "id": "VOTER005",
+    "name": "Abdul Rehman",
+    "relativeName": "Zakir Hussain",
+    "age": 41,
+    "gender": "Male",
+    "boothName": "Municipal College, Block B",
+    "partNumber": 18,
+    "serialNumber": 305
+  }
+]

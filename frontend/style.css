@@ -1,0 +1,367 @@
+:root {
+    --primary: #FF9933;     /* Saffron */
+    --secondary: #138808;   /* Green */
+    --bg-color: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --text-main: #1E293B;
+    --text-muted: #64748B;
+    --border-color: #E2E8F0;
+    --accent: #2563EB;      /* Blue for neutral actions */
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 480px;
+    background-color: var(--card-bg);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    position: relative;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(255,153,51,0.1), rgba(19,136,8,0.1));
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-title h1 {
+    font-size: 1.5rem;
+    color: var(--primary);
+}
+
+.header-title p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.practice-btn {
+    background-color: var(--secondary);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+}
+.practice-btn:active {
+    transform: scale(0.95);
+}
+
+/* Landing State */
+.landing-state {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+}
+
+.illustration-placeholder {
+    color: var(--accent);
+    margin: 20px 0;
+}
+
+.landing-state h2 {
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    color: var(--text-main);
+}
+
+.action-cards {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.card {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255,153,51,0.1);
+}
+
+.card-icon {
+    font-size: 2rem;
+    margin-right: 15px;
+}
+
+.card-text h3 {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+.card-text p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Chat Area */
+.chat-area {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.message {
+    margin-bottom: 15px;
+    max-width: 85%;
+    line-height: 1.5;
+    padding: 12px 16px;
+    border-radius: 16px;
+    animation: fadeIn 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.message.user {
+    align-self: flex-end;
+    background-color: var(--primary);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message.bot {
+    align-self: flex-start;
+    background-color: #F1F5F9;
+    color: var(--text-main);
+    border-bottom-left-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+/* Input Area */
+.input-container {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+    background: white;
+}
+
+.mic-btn {
+    background-color: #FEF08A;
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+}
+
+.mic-btn.recording {
+    background-color: #EF4444;
+    animation: pulse 1.5s infinite;
+}
+
+#userInput {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    border-radius: 22px;
+    padding: 0 15px;
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+
+.send-btn {
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 22px;
+    padding: 0 20px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* EVM Modal */
+.modal {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 350px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.close {
+    position: absolute;
+    top: 15px; right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.evm-machine {
+    border: 8px solid #cbd5e1;
+    background-color: #f8fafc;
+}
+
+.evm-panel {
+    margin-top: 20px;
+    border: 2px solid #94a3b8;
+    padding: 15px;
+    border-radius: 8px;
+    background: #e2e8f0;
+}
+
+.candidate-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+}
+
+.evm-btn {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background-color: #3b82f6;
+    border: 3px solid #1e3a8a;
+    cursor: pointer;
+}
+.evm-btn:active {
+    background-color: #1e3a8a;
+}
+
+.evm-feedback {
+    margin-top: 20px;
+    text-align: center;
+    color: var(--secondary);
+    font-weight: bold;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Step Cards */
+.step-card {
+    background: #ffffff;
+    border-left: 5px solid var(--secondary);
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    color: var(--text-main);
+}
+.step-card b {
+    color: var(--secondary);
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 0;
+    margin-top: 10px;
+    border-top: 1px dashed var(--border-color);
+}
+.quick-btn {
+    background: #E2E8F0;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: var(--text-main);
+    transition: background 0.2s;
+}
+.quick-btn:hover {
+    background: #CBD5E1;
+}
+
+/* VVPAT Slip */
+.vvpat-slip {
+    position: fixed;
+    bottom: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fdfdfd;
+    border: 1px solid #ccc;
+    padding: 15px 30px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    font-family: monospace;
+    font-size: 1.1rem;
+    z-index: 1000;
+    text-align: center;
+    border-top: 20px solid #ddd; /* Looks like a printed slip */
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from { bottom: 0; opacity: 0; }
+    to { bottom: 20%; opacity: 1; }
+}
+
+/* Map */
+.map-container {
+    padding: 10px 20px;
+    border-top: 1px solid var(--border-color);
+    background: white;
+}

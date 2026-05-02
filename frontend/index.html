@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India Election Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header>
+            <div class="header-title">
+                <h1>Election Guide</h1>
+                <p>Your simple, step-by-step voting helper</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="backBtn" class="practice-btn hidden" style="background-color: var(--text-muted);">Back to Home</button>
+                <button id="practiceBtn" class="practice-btn">Practice Voting</button>
+            </div>
+        </header>
+
+        <!-- Landing State / Action Cards -->
+        <div id="landingState" class="landing-state">
+            <div class="illustration-placeholder">
+                <svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+            </div>
+            <h2>How can I help you today?</h2>
+            
+            <div class="action-cards">
+                <div class="card" data-action="find_booth">
+                    <span class="card-icon">📍</span>
+                    <div class="card-text">
+                        <h3>Find my booth</h3>
+                        <p>I want to know where to vote</p>
+                    </div>
+                </div>
+                <div class="card" data-action="no_voter_id">
+                    <span class="card-icon">🪪</span>
+                    <div class="card-text">
+                        <h3>I don't have voter ID</h3>
+                        <p>Check if I can still vote</p>
+                    </div>
+                </div>
+                <div class="card" data-action="at_station">
+                    <span class="card-icon">🏢</span>
+                    <div class="card-text">
+                        <h3>I am at the polling station</h3>
+                        <p>Tell me what to do next</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Container -->
+        <div id="mapContainer" class="map-container hidden">
+            <iframe id="mapFrame" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+
+        <!-- Chat Area (Hidden initially) -->
+        <div id="chatArea" class="chat-area hidden">
+            <div id="chatMessages" class="chat-messages">
+                <!-- Messages will appear here -->
+            </div>
+            <div class="quick-actions hidden">
+                <button class="quick-btn" onclick="quick('I am at polling station and I am confused what to do step by step')">Confused at station?</button>
+                <button class="quick-btn" onclick="quick('I did not receive voter slip can I still vote')">No voter slip?</button>
+                <button class="quick-btn" onclick="quick('I want to find my polling booth location')">Find Booth</button>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-container">
+            <button id="micBtn" class="mic-btn" aria-label="Speak">
+                🎙️
+            </button>
+            <input type="text" id="userInput" placeholder="Type or say your question...">
+            <button id="sendBtn" class="send-btn">Send</button>
+        </div>
+    </div>
+
+    <!-- Practice EVM Modal -->
+    <div id="evmModal" class="modal hidden">
+        <div class="modal-content evm-machine">
+            <span id="closeEvm" class="close">&times;</span>
+            <h2 id="evmTitle">EVM Simulator</h2>
+            <p>Practice pressing the button to cast your vote.</p>
+            <div class="evm-panel">
+                <div class="candidate-row">
+                    <div class="candidate-info">BJP</div>
+                    <button class="evm-btn"></button>
+                </div>
+                <div class="candidate-row">
+                    <div class="candidate-info">Congress</div>
+                    <button class="evm-btn"></button>
+                </div>
+                <div class="candidate-row">
+                    <div class="candidate-info">Independent</div>
+                    <button class="evm-btn"></button>
+                </div>
+                <div class="candidate-row">
+                    <div class="candidate-info">NOTA</div>
+                    <button class="evm-btn"></button>
+                </div>
+            </div>
+            <div id="evmFeedback" class="evm-feedback hidden">
+                <span class="light-indicator">🔴</span>
+                <p>Beep! Vote Cast Successfully.</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
