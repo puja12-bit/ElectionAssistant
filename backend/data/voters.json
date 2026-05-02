@@ -1,0 +1,98 @@
+[
+    {
+        "id": "1",
+        "name": "Ravi Kumar",
+        "epicNumber": "ABC1234567",
+        "relativeName": "Venkatesh Kumar",
+        "location": "Guntur West, Andhra Pradesh",
+        "boothName": "Zilla Parishad High School, Room No. 2, Guntur West",
+        "partNumber": "142",
+        "serialNumber": "78",
+        "lat": 16.3067,
+        "lng": 80.4365
+    },
+    {
+        "id": "2",
+        "name": "Priya Sharma",
+        "epicNumber": "XYZ9876543",
+        "relativeName": "Rajesh Sharma",
+        "location": "Indiranagar, Bangalore, Karnataka",
+        "boothName": "Government Primary School, Indiranagar",
+        "partNumber": "88",
+        "serialNumber": "1042",
+        "lat": 12.9716,
+        "lng": 77.6412
+    },
+    {
+        "id": "3",
+        "name": "Amit Patel",
+        "epicNumber": "LMN4567890",
+        "relativeName": "Suresh Patel",
+        "location": "Ahmedabad East, Gujarat",
+        "boothName": "Municipal Community Hall, Ahmedabad East",
+        "partNumber": "210",
+        "serialNumber": "556",
+        "lat": 23.0225,
+        "lng": 72.5714
+    },
+    {
+        "id": "4",
+        "name": "Sita Devi",
+        "epicNumber": "GNT9988776",
+        "relativeName": "Ram Mohan",
+        "location": "Guntur West, Andhra Pradesh",
+        "boothName": "Zilla Parishad High School, Room No. 3, Guntur West",
+        "partNumber": "142",
+        "serialNumber": "152",
+        "lat": 16.3067,
+        "lng": 80.4365
+    },
+    {
+        "id": "5",
+        "name": "Sunita Rao",
+        "epicNumber": "TEL1122334",
+        "relativeName": "Prakash Rao",
+        "location": "Madhapur, Hyderabad, Telangana",
+        "boothName": "Oakridge International School, Madhapur",
+        "partNumber": "45",
+        "serialNumber": "231",
+        "lat": 17.4483,
+        "lng": 78.3915
+    },
+    {
+        "id": "6",
+        "name": "Vikram Singh",
+        "epicNumber": "DLH5566778",
+        "relativeName": "Karan Singh",
+        "location": "Dwarka Sector 10, Delhi",
+        "boitionName": "Modern Public School, Dwarka Sector 10",
+        "partNumber": "12",
+        "serialNumber": "890",
+        "lat": 28.5823,
+        "lng": 77.0500
+    },
+    {
+        "id": "7",
+        "name": "Ananya Chatterjee",
+        "epicNumber": "WBG7788990",
+        "relativeName": "Sourav Chatterjee",
+        "location": "Salt Lake, Kolkata, West Bengal",
+        "boothName": "Salt Lake Community Center, Block B",
+        "partNumber": "156",
+        "serialNumber": "44",
+        "lat": 22.5726,
+        "lng": 88.4227
+    },
+    {
+        "id": "8",
+        "name": "Rahul Deshmukh",
+        "epicNumber": "MAH3344556",
+        "relativeName": "Vijay Deshmukh",
+        "location": "Andheri West, Mumbai, Maharashtra",
+        "boothName": "St. Xavier's High School, Andheri",
+        "partNumber": "302",
+        "serialNumber": "121",
+        "lat": 19.1136,
+        "lng": 72.8697
+    }
+]

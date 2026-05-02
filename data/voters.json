@@ -48,5 +48,16 @@
     "boothName": "Municipal College, Block B",
     "partNumber": 18,
     "serialNumber": 305
+  },
+  {
+    "id": "APVOTER999",
+    "name": "Ravi",
+    "relativeName": "Venkateswara Rao",
+    "age": 29,
+    "gender": "Male",
+    "location": "Guntur West",
+    "boothName": "Zilla Parishad High School, Guntur West",
+    "partNumber": 101,
+    "serialNumber": 78
   }
 ]
