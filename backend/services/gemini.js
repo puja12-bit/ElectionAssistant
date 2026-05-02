@@ -1,4 +1,4 @@
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
@@ -90,31 +90,42 @@ class GeminiService {
 
     getAI() {
         if (!this.ai && process.env.GEMINI_API_KEY) {
-            this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+            console.log("Gemini API Key found, initializing...");
+            this.ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        }
+        if (!this.ai) {
+            console.warn("Gemini API Key NOT found in environment.");
         }
         return this.ai;
     }
 
     async generateResponse(prompt, context = "") {
-        const fullPrompt = `Context: ${context}\n\nUser Query: ${prompt}`;
-        
         const aiInstance = this.getAI();
         if (!aiInstance) {
              return `Step 1: What you should do now\nMocked Response: Please set GEMINI_API_KEY in .env file.\nStep 2: What will happen\nYou will see a real response once configured.\nStep 3: What to say (if needed)\nNot needed\nStep 4: Important note\nThis is a fallback response.`;
         }
 
+        const fullPrompt = `${systemInstruction}\n\nUser Context: ${context}\nUser Query: ${prompt}`;
+
         try {
-            const response = await aiInstance.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: fullPrompt,
-                config: {
-                    systemInstruction: systemInstruction,
-                    temperature: 0.2 // keep it focused and factual
-                }
-            });
-            return response.text;
+            const model = aiInstance.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const result = await model.generateContent(fullPrompt);
+            const response = await result.response;
+            return response.text();
         } catch (error) {
-            console.error("Gemini API Error:", error);
+            console.error("Gemini API Error Details:", error);
+            // If model is not found or key is restricted, try gemini-pro
+            if (error.status === 404 || error.status === 403 || error.message.includes('not found') || error.message.includes('leaked')) {
+                console.warn("Attempting fallback to gemini-pro...");
+                try {
+                    const fallbackModel = aiInstance.getGenerativeModel({ model: "gemini-pro" });
+                    const result = await fallbackModel.generateContent(fullPrompt);
+                    const response = await result.response;
+                    return response.text();
+                } catch (fallbackError) {
+                    console.error("Fallback Gemini API Error:", fallbackError);
+                }
+            }
             throw new Error("Failed to generate response from AI.");
         }
     }
