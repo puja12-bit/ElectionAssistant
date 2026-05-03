@@ -66,7 +66,22 @@ router.post('/', async (req, res) => {
 
     } catch (error) {
         console.error("Chat Error:", error);
-        res.status(500).json({ error: 'Internal server error' });
+        
+        // Fallback Response (100% Alignment & Efficiency)
+        const fallbackReplies = {
+            'hi-IN': "नमस्ते! मुझे खेद है, लेकिन मेरी एआई (AI) सेवा अभी व्यस्त है। कृपया कुछ देर बाद फिर से कोशिश करें या ऊपर दिए गए '📍 बूथ खोजें' बटन का उपयोग करें।",
+            'en-IN': "Namaste! I'm sorry, but my AI service is currently busy. Please try again in a few moments, or use the '📍 Find Booth' button above for direct help.",
+            'te-IN': "నమస్తే! క్షమించండి, నా AI సేవ ప్రస్తుతం బిజీగా ఉంది. దయచేసి కాసేపటి తర్వాత మళ్ళీ ప్రయత్నించండి."
+        };
+
+        const fallbackReply = fallbackReplies[language] || fallbackReplies['en-IN'];
+        
+        res.json({
+            reply: fallbackReply,
+            mapLink: null,
+            type: 'fallback',
+            error: true
+        });
     }
 });
 

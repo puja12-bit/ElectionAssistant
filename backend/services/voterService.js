@@ -63,6 +63,7 @@ class VoterService {
      * This ensures 100% Google Services alignment.
      */
     async getVoterFromFirestore(epicNumber) {
+        if (!firebase.db) return null;
         try {
             const voterRef = firebase.db.collection('voters').doc(epicNumber.toUpperCase());
             const doc = await voterRef.get();
