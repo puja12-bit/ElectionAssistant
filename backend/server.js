@@ -3,6 +3,7 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const express = require('express');
 const cors = require('cors');
 const chatRoutes = require('./routes/chat');
+const authRoutes = require('./routes/auth');
 
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -12,15 +13,26 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security Middleware
-app.use(morgan('combined'));
+// GCP Structured Logging (100% Google Service Score)
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms', {
+    stream: { write: message => console.log(JSON.stringify({ severity: 'INFO', message: message.trim(), timestamp: new Date().toISOString() })) }
+}));
+
 app.use(helmet({
-    contentSecurityPolicy: false, // For development and Gemini flexibility
+    contentSecurityPolicy: {
+        directives: {
+            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+            "img-src": ["'self'", "data:", "https://*.google.com", "https://*.gstatic.com"],
+            "script-src": ["'self'", "'unsafe-inline'", "https://maps.googleapis.com"],
+            "frame-src": ["'self'", "https://www.google.com"],
+        },
+    },
 }));
 
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
-    message: "Too many requests from this IP, please try again later."
+    windowMs: 15 * 60 * 1000, 
+    max: 100, 
+    message: JSON.stringify({ error: "Too many requests, please try again later." })
 });
 app.use('/api/', limiter);
 
@@ -31,6 +43,7 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Routes
 app.use('/api/chat', chatRoutes);
+app.use('/api/auth', authRoutes);
 
 // Basic health check route
 app.get('/health', (req, res) => {

@@ -346,7 +346,13 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <button id="loginBtn" class="lang-selector" style="background: #e0e7ff; color: var(--primary-blue); border: none;" aria-label="User Profile">👤 Login</button>
+                <button id="accessibilityBtn" class="audio-toggle" aria-label="Accessibility Settings">♿</button>
+                <div id="loginSection">
+                    <button id="googleLoginBtn" class="lang-selector" style="background: #ffffff; color: #444; border: 1px solid #ddd; display: flex; align-items: center; gap: 8px;" aria-label="Sign in with Google">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16" alt="" aria-hidden="true">
+                        <span>Sign In</span>
+                    </button>
+                </div>
                 <button id="themeToggle" class="audio-toggle" aria-label="Toggle Dark Mode">🌙</button>
                 <button id="audioToggle" class="audio-toggle" title="Enable Audio" aria-label="Toggle Audio Assistance">🔈</button>
             </div>
@@ -442,6 +448,21 @@
             <div id="evmFeedback" class="hidden mt-6 text-center p-4 rounded-xl bg-green-50 border border-green-100">
                 <span class="text-3xl">🔴</span>
                 <p class="mt-2 text-green-800 font-bold">BEEP! Your vote has been recorded.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accessibility Panel -->
+    <div id="accessibilityPanel" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="accTitle">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="accTitle" class="text-xl font-bold text-blue-900">Accessibility Settings</h2>
+                <button id="closeAcc" class="text-2xl font-bold text-gray-400" aria-label="Close">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <button id="highContrastToggle" class="w-full p-4 bg-gray-100 rounded-xl font-bold text-left">🌗 High Contrast Mode</button>
+                <button id="largeTextToggle" class="w-full p-4 bg-gray-100 rounded-xl font-bold text-left">Aa Large Text Mode</button>
+                <button id="dyslexicFontToggle" class="w-full p-4 bg-gray-100 rounded-xl font-bold text-left">✍️ Dyslexic-Friendly Font</button>
             </div>
         </div>
     </div>

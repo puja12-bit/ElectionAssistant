@@ -20,7 +20,7 @@ class VoterService {
         }
     }
 
-    searchVoter(name, relativeName = null, location = null, epicNumber = null) {
+    searchVoter({ name = null, relativeName = null, location = null, epicNumber = null } = {}) {
         const cacheKey = `search_${name}_${relativeName}_${location}_${epicNumber}`;
         const cachedResults = myCache.get(cacheKey);
         if (cachedResults) return cachedResults;

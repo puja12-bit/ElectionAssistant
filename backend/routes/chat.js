@@ -34,7 +34,10 @@ router.post('/', [
             }
         }
 
-        // If we already have voterDetails in the session, use them to build context immediately
+        // Voice-First Orientation for Blind Users
+        if (query.match(/(?:hello|start|hi|namaste)/i) && userLanguage === 'en-IN') {
+            contextString += "GUIDANCE: User is starting. Mention that they can use voice commands at any time. ";
+        }
         if (userState.voterDetails) {
             const v = userState.voterDetails;
             contextString += `PERSISTENT DATA: Previously Found Voter - Name: ${v.name}, EPIC: ${v.epicNumber}, Booth: ${v.boothName}, Part: ${v.partNumber}, Serial: ${v.serialNumber}. IF THE USER ASKS FOR GUIDANCE, USE THIS BOOTH. `;
@@ -137,6 +140,15 @@ router.post('/', [
             }
         }
 
+        if (contextType === 'no_voter_id' || query.match(/(?:no id|lost id|missing id|voter id missing)/i)) {
+            return res.json({
+                reply: "✅ **You CAN still vote without a Voter ID!**\n\nIf your name is in the voter list, you can show ANY of these 12 alternative IDs:\n\n1. Aadhaar Card\n2. PAN Card\n3. Unique Disability ID (UDID) Card\n4. MGNREGA Job Card\n5. Passbook with photo (Bank/Post Office)\n6. Health Insurance Smart Card\n7. Driving License\n8. Passport\n9. Smart Card issued by RGI under NPR\n10. Pension document with photo\n11. Service ID card (Govt/PSU)\n12. MP/MLA official ID card\n\n**Action**: Should I help you check if your name is in the list now?",
+                type: 'no_id_guide',
+                stage: 2
+            });
+        }
+
+        // Update stage based on context
         if (contextType === 'at_station' || query.toLowerCase().includes('at booth')) {
             userState.stage = 'at_station';
         } else if (contextType === 'find_booth' || query.toLowerCase().includes('where')) {
@@ -163,15 +175,13 @@ router.post('/', [
         try {
             aiResponse = await geminiService.generateResponse(query, contextString, userLanguage);
         } catch (error) {
-            console.error("Gemini failed, using fallback logic if possible.");
-            if (responseType === "booth_info") {
-                // Generate a manual response if we have the voter data but AI failed
-                aiResponse = `Step 1: Go to your assigned polling booth.
-Step 2: Reach ${contextString.match(/Booth: ([^,]+)/)[1]}.
-Step 3: Show your ID and mention you are serial number ${contextString.match(/Serial No: (\d+)/)[1]}.
-Step 4: Important: Reach before 5 PM to ensure you can vote.`;
+            console.warn("Gemini service unavailable, using contextual fallback.");
+            if (responseType === "booth_info" && contextString.includes('Booth:')) {
+                aiResponse = `I have found your details! \n\n**Booth**: ${contextString.match(/Booth: ([^,]+)/)?.[1] || 'Assigned Polling Station'}\n**Serial No**: ${contextString.match(/Serial: ([^.]+)/)?.[1] || 'Check with officer'}\n\n**Next Steps**:\n1. Reach the station before 5 PM.\n2. Show your ID at the entrance.\n3. Proceed to the voting compartment.`;
+            } else if (userState.stage === 'finding_booth') {
+                aiResponse = "To help you find your booth, please provide your **Name** or **EPIC Number**. I will then show you the exact map and directions.";
             } else {
-                throw error;
+                aiResponse = "I am here to help you with your voting process. You can ask me about finding your booth, what IDs are valid, or how to use the EVM machine.";
             }
         }
 
