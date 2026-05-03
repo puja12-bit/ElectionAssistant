@@ -16,6 +16,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const HOST = '0.0.0.0';
 
+// Trust the Replit/Render reverse proxy so rate-limiter identifies IPs correctly
+app.set('trust proxy', 1);
+
 // ── COMPRESSION ─────────────────────────────────────────────────────────────
 // Gzip/Brotli all responses — critical for 970M Indian users on slow networks
 app.use(compression());
