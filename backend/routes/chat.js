@@ -140,10 +140,10 @@ Step 4: Registration takes **30–45 days** to process. For the CURRENT election
             });
         }
 
-        // 5. Fake news / rumour / fact-check request
-        if (/(?:fake news|is it true|heard that|rumou?r|whatsapp (?:forward|message)|they say|someone said|i heard|fact.?check|real or fake|misinformation|propaganda)/i.test(query)) {
+        // 5. Fake news / rumour / fact-check / incident report request
+        if (/(?:fake news|is it true|heard that|rumou?r|whatsapp (?:forward|message)|they say|someone said|i heard|fact.?check|real or fake|misinformation|propaganda|rigged|rigging|fight|fighting|clash|clashes|violence|incident|incident[s]?|commotion|disturbance|booth issue|polling booth issue|party clash|party clashes|law and order)/i.test(query)) {
             return res.json({
-                reply: `🔍 **Election Fact-Check Guide**
+                reply: `🔍 **Election News & Incident Guide**
 
 Step 1: **ONLY trust these official sources** for election information:
  • ECI official site: **eci.gov.in**
@@ -151,15 +151,27 @@ Step 1: **ONLY trust these official sources** for election information:
  • Press releases: **press.eci.gov.in**
  • Voter helpline: **1950** (toll-free)
 
-Step 2: **Common fake news to IGNORE**:
+Step 2: **How to treat election news safely**:
+ ✅ If it is a confirmed incident, follow official instructions from police / ECI / CEO
+ ✅ If it is a rumour, verify it before sharing
+ ✅ If there is any violence or disturbance, stay away from the spot and keep yourself safe
+
+Step 3: **Common fake news to IGNORE**:
  ❌ WhatsApp messages declaring winners before official counting
  ❌ Altered voting dates or timing (always 7 AM–6 PM on official poll day)
  ❌ Rumours about booth rigging or EVM tampering (EVMs are standalone, not networked)
  ❌ "Vote only if you receive an SMS" — FALSE. Your right to vote does not require any SMS.
+ ❌ Unverified claims about party clashes, booth fights, or polling booth chaos without official confirmation
 
-Step 3: **If you receive suspicious news** → Do NOT forward it. Check eci.gov.in first.
+Step 4: **If the news is about a real incident** → Do not panic, do not spread videos blindly, and follow:
+ • Police instructions
+ • Election Commission / CEO updates
+ • District administration advisories
+ • Local polling officer guidance
 
-Step 4: Spreading election misinformation is punishable under the Representation of the People Act. Report it to your state's Chief Electoral Officer (CEO) website.`,
+Step 5: **If you are near the spot** → move away, stay safe, and call **112** for emergencies or **1950** for election help.
+
+Step 6: Spreading election misinformation is punishable under the Representation of the People Act. Report it to your state's Chief Electoral Officer (CEO) website.`,
                 type: 'fact_check',
                 stage: 2
             });
