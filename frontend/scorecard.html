@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoteSeva Quality Scorecard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    min-height: 100vh;
+    padding: 28px;
+    color: #f1f5f9;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .header p {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+  }
+  .flag-stripe {
+    display: flex;
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 12px auto;
+    max-width: 300px;
+  }
+  .flag-stripe span { flex: 1; }
+  .f1 { background: #FF9933; }
+  .f2 { background: #ffffff; }
+  .f3 { background: #138808; }
+
+  .overall-ring {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 16px auto 24px;
+  }
+  .ring-container {
+    position: relative;
+    width: 130px;
+    height: 130px;
+  }
+  svg.ring { width: 130px; height: 130px; transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: #1e293b; stroke-width: 14; }
+  .ring-fill { fill: none; stroke-width: 14; stroke-linecap: round; stroke-dasharray: 326; stroke-dashoffset: 114; stroke: url(#grad); transition: stroke-dashoffset 1s ease; }
+  .ring-text {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .ring-text .score { font-size: 32px; font-weight: 800; color: #fff; line-height: 1; }
+  .ring-text .label { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+  .overall-label { font-size: 13px; font-weight: 600; color: #c7d2fe; margin-top: 10px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 16px 18px;
+    backdrop-filter: blur(10px);
+    transition: transform 0.2s;
+  }
+  .card:hover { transform: translateY(-2px); }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .cat-info { display: flex; align-items: center; gap: 10px; }
+  .cat-icon { font-size: 22px; }
+  .cat-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+  .cat-score {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+  }
+  .bar-track {
+    background: rgba(255,255,255,0.08);
+    border-radius: 100px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 1.2s ease;
+  }
+  .bullets { list-style: none; }
+  .bullets li {
+    font-size: 10.5px;
+    color: #94a3b8;
+    padding: 2px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  .bullets li::before { content: '•'; color: #6366f1; flex-shrink: 0; }
+  .bullets li.good::before { color: #22c55e; }
+  .bullets li.warn::before { color: #f59e0b; }
+  .bullets li.bad::before { color: #ef4444; }
+
+  /* Grade colours */
+  .grade-a { background: linear-gradient(90deg, #22c55e, #16a34a); }
+  .grade-b { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+  .grade-c { background: linear-gradient(90deg, #f59e0b, #d97706); }
+  .grade-d { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+  .footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 10px;
+    color: #475569;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🗳️ VoteSeva — Quality Scorecard</h1>
+  <p>India Election Assistant · Code Analysis Report</p>
+  <div class="flag-stripe">
+    <span class="f1"></span><span class="f2"></span><span class="f3"></span>
+  </div>
+</div>
+
+<div class="overall-ring">
+  <div class="ring-container">
+    <svg class="ring" viewBox="0 0 110 110">
+      <defs>
+        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#6366f1"/>
+          <stop offset="100%" style="stop-color:#22d3ee"/>
+        </linearGradient>
+      </defs>
+      <circle class="ring-bg" cx="55" cy="55" r="46"/>
+      <circle class="ring-fill" cx="55" cy="55" r="46"/>
+    </svg>
+    <div class="ring-text">
+      <div class="score">65%</div>
+      <div class="label">Overall</div>
+    </div>
+  </div>
+  <div class="overall-label">OVERALL PROJECT SCORE — Grade: B-</div>
+</div>
+
+<div class="grid">
+
+  <!-- Efficiency -->
+  <div class="card">
+    <div class="card-header">
+      <div class="cat-info">
+        <div class="cat-icon">⚡</div>
+        <div class="cat-name">Efficiency</div>
+      </div>
+      <div class="cat-score">62%</div>
+    </div>
+    <div class="bar-track"><div class="bar-fill grade-c" style="width:62%"></div></div>
+    <ul class="bullets">
+      <li class="good">NodeCache with 10-min TTL for voter lookups</li>
+      <li class="good">Decision Engine reduces unnecessary Gemini calls</li>
+      <li class="good">Rate limiting (100 req/15 min) prevents overload</li>
+      <li class="warn">No response compression (missing gzip/brotli)</li>
+      <li class="bad">No DB — JSON file reads on every server start</li>
+      <li class="bad">No horizontal scaling or load balancing</li>
+    </ul>
+  </div>
+
+  <!-- Testing -->
+  <div class="card">
+    <div class="card-header">
+      <div class="cat-info">
+        <div class="cat-icon">🧪</div>
+        <div class="cat-name">Testing</div>
+      </div>
+      <div class="cat-score">35%</div>
+    </div>
+    <div class="bar-track"><div class="bar-fill grade-d" style="width:35%"></div></div>
+    <ul class="bullets">
+      <li class="good">Jest + Supertest configured</li>
+      <li class="good">voterService unit tests (EPIC + location)</li>
+      <li class="good">Integration test for /api/chat with mocks</li>
+      <li class="bad">No frontend tests (no Cypress/Playwright)</li>
+      <li class="bad">Very limited coverage (&lt;10% estimated)</li>
+      <li class="bad">No CI/CD pipeline or automated test runs</li>
+    </ul>
+  </div>
+
+  <!-- Security -->
+  <div class="card">
+    <div class="card-header">
+      <div class="cat-info">
+        <div class="cat-icon">🔒</div>
+        <div class="cat-name">Security</div>
+      </div>
+      <div class="cat-score">68%</div>
+    </div>
+    <div class="bar-track"><div class="bar-fill grade-c" style="width:68%"></div></div>
+    <ul class="bullets">
+      <li class="good">Helmet (CSP, XSS, HSTS headers)</li>
+      <li class="good">express-rate-limit + express-validator</li>
+      <li class="good">express-mongo-sanitize (injection protection)</li>
+      <li class="good">Structured audit logging via Morgan</li>
+      <li class="bad">API key hardcoded in .env.example (exposed)</li>
+      <li class="bad">Firebase Auth is mocked — no real verification</li>
+    </ul>
+  </div>
+
+  <!-- Google Services -->
+  <div class="card">
+    <div class="card-header">
+      <div class="cat-info">
+        <div class="cat-icon">🌐</div>
+        <div class="cat-name">Google Services</div>
+      </div>
+      <div class="cat-score">78%</div>
+    </div>
+    <div class="bar-track"><div class="bar-fill grade-b" style="width:78%"></div></div>
+    <ul class="bullets">
+      <li class="good">Gemini 2.5 Flash AI (primary intelligence layer)</li>
+      <li class="good">Firebase Admin SDK (session management)</li>
+      <li class="good">Google Maps embed (booth location)</li>
+      <li class="good">GCP structured JSON logging (Cloud Run ready)</li>
+      <li class="good">Google Fonts + google-auth-library</li>
+      <li class="warn">Firebase configured but running in mock mode</li>
+    </ul>
+  </div>
+
+  <!-- Code Quality -->
+  <div class="card">
+    <div class="card-header">
+      <div class="cat-info">
+        <div class="cat-icon">💎</div>
+        <div class="cat-name">Code Quality</div>
+      </div>
+      <div class="cat-score">65%</div>
+    </div>
+    <div class="bar-track"><div class="bar-fill grade-c" style="width:65%"></div></div>
+    <ul class="bullets">
+      <li class="good">Clean Route → Service → Config architecture</li>
+      <li class="good">ESLint configured, health check endpoint</li>
+      <li class="good">Dotenv, structured logging, README docs</li>
+      <li class="warn">Vanilla JS frontend growing complex (~380 lines)</li>
+      <li class="bad">Hardcoded booth/location values in route logic</li>
+      <li class="bad">No TypeScript — no type safety</li>
+    </ul>
+  </div>
+
+  <!-- Accessibility -->
+  <div class="card">
+    <div class="card-header">
+      <div class="cat-info">
+        <div class="cat-icon">♿</div>
+        <div class="cat-name">Accessibility</div>
+      </div>
+      <div class="cat-score">80%</div>
+    </div>
+    <div class="bar-track"><div class="bar-fill grade-b" style="width:80%"></div></div>
+    <ul class="bullets">
+      <li class="good">Voice input (STT) + output (TTS) built-in</li>
+      <li class="good">6 Indian languages (EN, HI, TE, TA, KN, MR)</li>
+      <li class="good">High contrast, large text, dyslexic font modes</li>
+      <li class="good">ARIA labels, skip-links, semantic HTML</li>
+      <li class="good">Dark mode + action cards for low-literacy users</li>
+      <li class="warn">Not fully WCAG 2.1 AA compliant (partial)</li>
+    </ul>
+  </div>
+
+</div>
+
+<div class="footer">
+  Scores based on static code analysis · VoteSeva v1.0 · May 2026
+</div>
+
+</body>
+</html>
