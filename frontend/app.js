@@ -96,6 +96,16 @@ function initEventListeners() {
         if (e.key === 'Enter') handleSend();
     });
 
+    // Language switching
+    document.querySelectorAll('.lang-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+            document.querySelectorAll('.lang-pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            userLanguage = pill.dataset.lang;
+            addBotMessage(`Language changed to ${pill.innerText}. How can I help you?`);
+        });
+    });
+
     // Back to home
     backBtn.addEventListener('click', showDashboard);
 
@@ -226,7 +236,7 @@ async function handleSend() {
 }
 
 function addUserMessage(text) {
-    if (landingPanel.style.display !== 'none') showChat();
+    if (!landingPanel.classList.contains('hidden')) showChat();
     const wrapper = document.createElement('div');
     wrapper.className = 'message-wrapper user';
     wrapper.innerHTML = `<div class="message user">${text}</div>`;
@@ -235,7 +245,7 @@ function addUserMessage(text) {
 }
 
 function addBotMessage(text) {
-    if (landingPanel.style.display !== 'none') showChat();
+    if (!landingPanel.classList.contains('hidden')) showChat();
     const wrapper = document.createElement('div');
     wrapper.className = 'message-wrapper bot';
     
