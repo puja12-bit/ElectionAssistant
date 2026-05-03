@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="VoteSeva — India's AI-powered election assistant. Find your polling booth, check voter roll, and get step-by-step guidance in 6 Indian languages.">
+  <meta name="description" content="VoteSeva — India's AI-powered election assistant. Find your polling booth, check voter roll, get step-by-step guidance, and fact-check election news in 6 Indian languages.">
   <title>VoteSeva — India Election Assistant</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -14,7 +14,93 @@
 <!-- WCAG: Skip to main content -->
 <a href="#mainScroll" class="skip-link">Skip to main content</a>
 
-<div class="app-shell" id="appShell">
+<!-- ===== ONBOARDING / AUTH SCREEN ===== -->
+<div id="onboardingScreen" class="onboarding-overlay" role="dialog" aria-modal="true" aria-labelledby="onboardTitle">
+  <div class="onboarding-box">
+    <!-- Header with flag stripe -->
+    <div class="ob-flag-stripe" aria-hidden="true">
+      <span class="ob-fs fs-1"></span><span class="ob-fs fs-2"></span><span class="ob-fs fs-3"></span>
+    </div>
+    <div class="ob-logo">
+      <div class="ob-logo-icon" aria-hidden="true">🗳️</div>
+      <div>
+        <h1 class="ob-title" id="onboardTitle">VoteSeva</h1>
+        <p class="ob-subtitle">India Election Assistant</p>
+      </div>
+    </div>
+    <p class="ob-desc">Your personal guide for finding your booth, checking registration, and understanding the voting process — powered by AI.</p>
+
+    <!-- Tab selector -->
+    <div class="ob-tabs" role="tablist" aria-label="Sign in method">
+      <button class="ob-tab active" role="tab" aria-selected="true" data-tab="epic" id="tab-epic">🗳️ Voter ID</button>
+      <button class="ob-tab" role="tab" aria-selected="false" data-tab="name" id="tab-name">👤 Name Search</button>
+      <button class="ob-tab" role="tab" aria-selected="false" data-tab="guest" id="tab-guest">🔓 Guest</button>
+    </div>
+
+    <!-- EPIC / Voter ID Tab -->
+    <div class="ob-panel" id="panel-epic" role="tabpanel" aria-labelledby="tab-epic">
+      <p class="ob-panel-hint">Enter your Voter ID (EPIC number) to get a personalised experience — your booth details will be pre-loaded.</p>
+      <label class="ob-field-label" for="epicInput">EPIC / Voter ID Number</label>
+      <input class="ob-input" id="epicInput" type="text" placeholder="e.g. ABC1234567" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <div class="ob-error hidden" id="epicError" role="alert"></div>
+      <button class="ob-btn primary" id="verifyEpicBtn">Find My Details →</button>
+    </div>
+
+    <!-- Name Search Tab -->
+    <div class="ob-panel hidden" id="panel-name" role="tabpanel" aria-labelledby="tab-name">
+      <p class="ob-panel-hint">Search by your name to verify your registration and pre-load your booth details.</p>
+      <label class="ob-field-label" for="nameInput">Your Full Name</label>
+      <input class="ob-input" id="nameInput" type="text" placeholder="e.g. Ravi Kumar" maxlength="60" autocomplete="name">
+      <label class="ob-field-label" for="relativeNameInput" style="margin-top:10px">Father's / Husband's Name <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+      <input class="ob-input" id="relativeNameInput" type="text" placeholder="e.g. Venkatesh Kumar" maxlength="60" autocomplete="off">
+      <div class="ob-error hidden" id="nameError" role="alert"></div>
+      <button class="ob-btn primary" id="verifyNameBtn">Search Voter Roll →</button>
+    </div>
+
+    <!-- Guest Tab -->
+    <div class="ob-panel hidden" id="panel-guest" role="tabpanel" aria-labelledby="tab-guest">
+      <p class="ob-panel-hint">Use VoteSeva without identifying yourself. You can still ask any election question, get booth guidance, check fake news, and learn the voting process.</p>
+      <div class="ob-guest-features">
+        <div class="ob-feature">✅ Ask election questions (AI-powered)</div>
+        <div class="ob-feature">✅ Learn how elections work</div>
+        <div class="ob-feature">✅ Fact-check election news</div>
+        <div class="ob-feature">✅ EVM practice simulator</div>
+        <div class="ob-feature">⚡ Find your booth — type your name in chat</div>
+      </div>
+      <button class="ob-btn secondary" id="continueGuestBtn">Continue as Guest →</button>
+    </div>
+
+    <!-- Loading state -->
+    <div class="ob-loading hidden" id="obLoading" aria-live="polite">
+      <div class="ob-spinner" aria-hidden="true"></div>
+      <span>Searching voter roll…</span>
+    </div>
+
+    <!-- Result: Not Found -->
+    <div class="ob-result hidden" id="obNotFound" role="alert">
+      <div class="ob-result-icon">❌</div>
+      <p class="ob-result-title">No matching record found</p>
+      <p class="ob-result-msg">You can still use VoteSeva as a guest. To check your official registration, visit <a href="https://electoralsearch.eci.gov.in" target="_blank" rel="noopener" class="ob-link">electoralsearch.eci.gov.in</a> or call <strong>1950</strong> (toll-free).</p>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="ob-btn secondary" id="tryAgainBtn">Try Again</button>
+        <button class="ob-btn primary" id="guestFromNotFoundBtn">Continue as Guest</button>
+      </div>
+    </div>
+
+    <!-- Result: Found -->
+    <div class="ob-result hidden" id="obFound" role="alert">
+      <div class="ob-result-icon">✅</div>
+      <p class="ob-result-title" id="obFoundName">Welcome, Ravi Kumar!</p>
+      <div class="ob-voter-preview" id="obVoterPreview"></div>
+      <button class="ob-btn primary" id="enterAppBtn">Start My Voting Journey →</button>
+    </div>
+
+    <p class="ob-privacy">🔒 No account needed. Your data stays on your device.</p>
+  </div>
+</div>
+
+<!-- ===== MAIN APP SHELL ===== -->
+<div class="app-shell" id="appShell" style="display:none">
 
   <!-- ===== TOP NAV ===== -->
   <header class="top-nav" role="banner" aria-label="VoteSeva navigation">
@@ -46,12 +132,21 @@
 
   <!-- ===== SIDEBAR (Desktop) ===== -->
   <nav class="sidebar" aria-label="Primary navigation">
+    <!-- Personalised voter card (shown after auth) -->
     <div class="voter-card-sidebar" id="sidebarVoterCard" style="display:none">
       <div class="vc-name" id="sidebarName">—</div>
       <div class="vc-epic" id="sidebarEpic">EPIC: —</div>
       <div class="vc-chips">
         <span class="vc-chip" id="sidebarBooth">📍 —</span>
         <span class="vc-chip" id="sidebarSerial"># —</span>
+      </div>
+    </div>
+    <!-- Guest banner -->
+    <div class="sidebar-guest-banner" id="sidebarGuestBanner" style="display:none">
+      <div class="gb-icon">👤</div>
+      <div>
+        <div class="gb-title">Guest Mode</div>
+        <button class="gb-link" id="sidebarSignInBtn">Sign in to personalise →</button>
       </div>
     </div>
     <div class="sidebar-section">
@@ -65,11 +160,17 @@
       <button class="sidebar-nav-item" data-action="no_voter_id">
         <span class="nav-item-icon">🪪</span> No Voter ID?
       </button>
+      <button class="sidebar-nav-item" data-action="check_registration">
+        <span class="nav-item-icon">📋</span> Check Registration
+      </button>
       <button class="sidebar-nav-item" data-action="practice">
         <span class="nav-item-icon">🖥️</span> EVM Practice
       </button>
       <button class="sidebar-nav-item" data-action="at_station">
         <span class="nav-item-icon">🏢</span> At the Booth
+      </button>
+      <button class="sidebar-nav-item" data-action="fact_check">
+        <span class="nav-item-icon">🔍</span> Fact Check
       </button>
     </div>
     <div class="sidebar-section">
@@ -143,7 +244,7 @@
 
       <!-- Landing Panel -->
       <div id="landingPanel">
-        <div class="section-title">What do you need?</div>
+        <div class="section-title" id="landingTitle">What do you need?</div>
         <div class="action-grid" role="list" aria-label="Main actions">
           <button class="action-card primary" data-action="find_booth" role="listitem"
             aria-label="Find my polling booth using EPIC ID or name">
@@ -170,7 +271,24 @@
             <span class="action-sub" id="card4Sub">Step-by-step guide</span>
           </button>
         </div>
-        <p style="text-align:center;color:var(--text-muted);font-size:12px;margin-top:12px;">
+
+        <!-- Quick Links Row -->
+        <div class="landing-quick-row" role="list" aria-label="Quick topics">
+          <button class="landing-quick-btn" onclick="sendAction('I am new to this area, how do I vote?')" role="listitem">
+            📍 New to Area
+          </button>
+          <button class="landing-quick-btn" onclick="sendAction('Am I registered to vote? How do I check?')" role="listitem">
+            📋 Check Registration
+          </button>
+          <button class="landing-quick-btn" onclick="sendAction('I heard some fake news about elections, how do I fact check?')" role="listitem">
+            🔍 Fact Check
+          </button>
+          <button class="landing-quick-btn" onclick="sendAction('How does the election process work in India?')" role="listitem">
+            🗳️ How Elections Work
+          </button>
+        </div>
+
+        <p style="text-align:center;color:var(--text-muted);font-size:12px;margin-top:4px;">
           👆 Tap an action or type your question below
         </p>
       </div>
@@ -195,11 +313,13 @@
     <!-- Input Bar -->
     <footer class="input-bar" role="contentinfo" aria-label="Message input">
       <div class="quick-chips" role="group" aria-label="Quick actions">
-        <button class="chip" onclick="sendAction('Find my booth')">🔍 Find Booth</button>
-        <button class="chip" onclick="sendAction('I am at the booth')">🏢 At Booth</button>
-        <button class="chip" onclick="sendAction('I need directions to my booth')">🗺️ Directions</button>
+        <button class="chip" onclick="sendAction('Find my polling booth')">🔍 Find Booth</button>
+        <button class="chip" onclick="sendAction('Am I registered to vote?')">📋 Registration</button>
+        <button class="chip" onclick="sendAction('I am new to this area')">📍 New to Area</button>
+        <button class="chip" onclick="sendAction('I am at the polling booth now')">🏢 At Booth</button>
         <button class="chip red" onclick="sendAction('SOS I am lost')">🆘 SOS</button>
-        <button class="chip" onclick="sendAction('I lost my voter ID')">🆔 No ID</button>
+        <button class="chip" onclick="sendAction('I lost my voter ID card')">🆔 No ID</button>
+        <button class="chip" onclick="sendAction('I heard some fake news about elections')">🔍 Fact Check</button>
       </div>
       <div class="input-row">
         <button id="backBtn" class="icon-btn back-btn hidden" aria-label="Go back to home" style="border-radius:50%;flex-shrink:0;">🏠</button>
@@ -260,13 +380,31 @@
           <div><div class="rp-ref-title">Voter Roll Search</div><div class="rp-ref-sub"><a href="https://electoralsearch.eci.gov.in" target="_blank" rel="noopener" style="color:var(--navy);font-weight:700;">electoralsearch.eci.gov.in</a></div></div>
         </div>
         <div class="rp-ref-item">
+          <span class="rp-ref-icon">📋</span>
+          <div><div class="rp-ref-title">Check Registration</div><div class="rp-ref-sub"><a href="https://nvsp.in" target="_blank" rel="noopener" style="color:var(--navy);font-weight:700;">nvsp.in</a> · Voter Helpline App</div></div>
+        </div>
+        <div class="rp-ref-item">
           <span class="rp-ref-icon">🪪</span>
           <div><div class="rp-ref-title">No Voter ID?</div><div class="rp-ref-sub">Aadhaar, PAN, Passport, Driving Licence + 8 more valid</div></div>
+        </div>
+        <div class="rp-ref-item">
+          <span class="rp-ref-icon">📊</span>
+          <div><div class="rp-ref-title">Official Results</div><div class="rp-ref-sub"><a href="https://results.eci.gov.in" target="_blank" rel="noopener" style="color:var(--navy);font-weight:700;">results.eci.gov.in</a> only</div></div>
         </div>
         <div class="rp-ref-item">
           <span class="rp-ref-icon">🖥️</span>
           <div><div class="rp-ref-title">EVM Practice</div><div class="rp-ref-sub"><button onclick="openEvmModal()" style="background:none;border:none;color:var(--navy);font-weight:700;cursor:pointer;font-size:11px;padding:0;">Open simulator →</button></div></div>
         </div>
+      </div>
+    </div>
+
+    <!-- Fact Check Notice -->
+    <div class="rp-section">
+      <div class="rp-label">🔍 Fact Check</div>
+      <div class="rp-fact-box">
+        <p class="rp-fact-heading">Seen fake election news?</p>
+        <p class="rp-fact-body">Only trust <strong>eci.gov.in</strong> and <strong>results.eci.gov.in</strong> for official election information. Never forward unverified WhatsApp messages.</p>
+        <button class="rp-fact-btn" onclick="sendAction('I heard some fake news about the election. How do I fact check it?')">Ask AI to Fact-Check →</button>
       </div>
     </div>
 
