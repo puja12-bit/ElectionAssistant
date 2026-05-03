@@ -10,7 +10,8 @@ const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
+const HOST = '0.0.0.0';
 
 // Security Middleware
 // GCP Structured Logging (100% Google Service Score)
@@ -50,6 +51,6 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'Election Assistant Backend is running.' });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+    console.log(`Server is running on ${HOST}:${PORT}`);
 });
