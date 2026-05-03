@@ -15,9 +15,13 @@
     "@google/genai": "^1.51.0",
     "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.6",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "firebase-admin": "^13.8.0"
+    "express-validator": "^7.3.2",
+    "firebase-admin": "^13.8.0",
+    "jsdom": "^29.1.1",
+    "morgan": "^1.10.1"
   },
   "devDependencies": {
     "dompurify": "^3.4.2",

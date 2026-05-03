@@ -38,11 +38,11 @@ class VoterService {
             let matches = true;
 
             if (name) {
-                if (!voter.name.toLowerCase().includes(name.toLowerCase())) matches = false;
+                if (!voter.name || typeof voter.name !== 'string' || !voter.name.toLowerCase().includes(name.toLowerCase())) matches = false;
             }
 
             if (relativeName) {
-                if (!voter.relativeName || !voter.relativeName.toLowerCase().includes(relativeName.toLowerCase())) matches = false;
+                if (!voter.relativeName || typeof voter.relativeName !== 'string' || !voter.relativeName.toLowerCase().includes(relativeName.toLowerCase())) matches = false;
             }
 
             if (location) {

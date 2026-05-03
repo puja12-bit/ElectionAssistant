@@ -6,11 +6,13 @@ const chatRoutes = require('./routes/chat');
 
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security Middleware
+app.use(morgan('combined'));
 app.use(helmet({
     contentSecurityPolicy: false, // For development and Gemini flexibility
 }));

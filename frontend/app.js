@@ -8,6 +8,7 @@ const sendBtn = document.getElementById('sendBtn');
 const micBtn = document.getElementById('micBtn');
 const backBtn = document.getElementById('backBtn');
 const languageSelect = document.getElementById('languageSelect');
+const themeToggle = document.getElementById('themeToggle');
 const audioToggle = document.getElementById('audioToggle');
 
 // State
@@ -157,9 +158,24 @@ function addMessage(text, sender) {
         chatMessages.appendChild(locBtn);
     }
 
-    const mainView = document.getElementById('mainView');
     mainView.scrollTop = mainView.scrollHeight;
 }
+
+// Global Clipboard Helper
+window.copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        alert("Address copied to clipboard!");
+    });
+};
+
+// Global action helper for chips
+window.sendAction = (action) => {
+    if (action === "Help, I am lost!") {
+        sendMessage("SOS - I am lost and need help finding my booth!");
+    } else {
+        sendMessage(action);
+    }
+};
 
 function getGeoLocation() {
     if (!navigator.geolocation) {
@@ -217,7 +233,17 @@ async function sendMessage(textOverride = null) {
 
         chatMessages.removeChild(loadingMsg);
         const data = await response.json();
+        
+        // Handle Map rendering for Directions/SOS
+        if (data.mapLink) {
+            document.getElementById('mapContainer').classList.remove('hidden');
+            document.getElementById('mapFrame').src = data.mapLink.includes('output=embed') ? data.mapLink : `${data.mapLink}&output=embed`;
+        } else if (data.type !== 'booth_info') {
+            document.getElementById('mapContainer').classList.add('hidden');
+        }
+
         if (data.reply) addMessage(data.reply, 'bot');
+        if (data.stage) updateStage(data.stage);
     } catch (error) {
         addMessage("Sorry, I cannot connect. Please check your internet.", 'bot');
     }

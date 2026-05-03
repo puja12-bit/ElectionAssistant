@@ -4,16 +4,22 @@ const geminiService = require('../services/gemini');
 const voterService = require('../services/voterService');
 const mapService = require('../services/mapService');
 const { db } = require('../config/firebase');
+const { body, validationResult } = require('express-validator');
 
 // Decision Engine logic built into the route
-router.post('/', async (req, res) => {
+router.post('/', [
+    body('sessionId').isString().notEmpty().trim().escape(),
+    body('query').isString().notEmpty().trim(),
+    body('language').optional().isString().trim().escape()
+], async (req, res) => {
     try {
-        const { sessionId, query, contextType, name, relativeName, language } = req.body;
-        const userLanguage = language || 'en-IN';
-
-        if (!query) {
-            return res.status(400).json({ error: 'Query is required' });
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
         }
+
+        const { sessionId, query, contextType = 'general', name, relativeName, language } = req.body;
+        const userLanguage = language || 'en-IN';
 
         let contextString = "";
         let mapLink = null;
@@ -40,12 +46,58 @@ router.post('/', async (req, res) => {
         let searchName = name;
         let searchLoc = null;
 
+        // 1. SOS / Emergency Mode
+        const sosMatch = query.match(/(?:i am lost|help me|lost|where am i|emergency|sos)/i);
+        if (sosMatch) {
+            return res.json({
+                reply: "🚨 **EMERGENCY ASSISTANCE ACTIVATED**\n\nDon't worry, I am here to help. \n\n1. **Your Nearest Booth**: Zilla Parishad School (Guntur West)\n2. **Emergency Help**: 1950 (ECI Helpline)\n3. **Action**: I have opened the map below to guide you safely.",
+                type: 'sos',
+                stage: 4,
+                mapLink: "https://www.google.com/maps/dir/?api=1&destination=Zilla+Parishad+High+School+Guntur"
+            });
+        }
+
+        // 2. Direction Intent (CRITICAL FIX)
+        const directionMatch = query.match(/(?:direction|direct|route|map|where is|how to go|booth location|navigate)/i);
+        if (directionMatch) {
+            if (userState.voterDetails) {
+                const voter = userState.voterDetails;
+                const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(voter.boothName + ", " + voter.location)}`;
+                return res.json({
+                    reply: `📍 **Directions to your Booth**\n\nI have found your booth: **${voter.boothName}**.\n\n**Step-by-Step Route:**\n1. Follow the blue line on the map below.\n2. It's approximately 10 minutes from your registered area in ${voter.location}.\n3. Once you arrive, look for **Room No. ${voter.partNumber || '2'}**.\n\nWould you like me to guide you through the entrance steps now?`,
+                    type: 'direction',
+                    stage: 4,
+                    mapLink: mapUrl
+                });
+            } else {
+                return res.json({
+                    reply: "🗺️ **Let's find your route!**\n\nTo give you the exact directions, I first need to know which booth is yours. \n\nPlease provide your **EPIC number** (Voter ID) or your **Name and Location**. \n\nOnce you do, I will show you the exact map and turn-by-turn directions.",
+                    type: 'booth_search_prompt',
+                    stage: 3
+                });
+            }
+        }
+        // 3. At Polling Station Context (ACTION-FIRST FIX)
+        const atStationMatch = query.match(/(?:at booth|at station|reached|standing in line|security check|help at booth)/i);
+        if (atStationMatch || contextType === 'at_station') {
+            const serial = userState.voterDetails?.serialNumber || 'to be checked with officer';
+            const part = userState.voterDetails?.partNumber || 'your designated room';
+            return res.json({
+                reply: `🏢 **Immediate Steps: At the Polling Station**\n\nI see you are at the booth. Follow these exact steps for a fast vote:\n\n**Step 1: Locate your Queue**\nShow your ID to the help-desk officer outside. Tell them your **Serial No: ${serial}**.\n\n**Step 2: ID Verification**\nEnter **Room No: ${part}** and show your ID to the first polling officer.\n\n**Step 3: Inking & Register**\nThe second officer will ink your finger and take your signature.\n\n**Step 4: Casting Vote**\nGo to the EVM booth. Press the BLUE button for your candidate. Wait for the **LONG BEEP**.\n\nWould you like me to open the EVM practice simulator now?`,
+                type: 'at_station_guide',
+                stage: 5
+            });
+        }
+
         // Improved intent detection for "I am [Name] from [Location]" or EPIC numbers
-        const nameMatch = query.match(/(?:i am|my name is|i'm)\s+([a-zA-Z]+)/i);
+        const nameMatch = query.match(/(?:i am|my name is|i'm)\s+([a-zA-Z\s]+)/i);
         const locMatch = query.match(/(?:from|at|in|near|lives in)\s+([a-zA-Z\s]+)/i);
         const epicMatch = query.match(/[A-Z]{3}[0-9]{7}|[A-Z]{2}[0-9]{8}/i); // Common EPIC formats
         
-        if (nameMatch) searchName = nameMatch[1];
+        if (nameMatch) {
+            searchName = nameMatch[1].trim();
+            console.log(`[DEBUG] Matched Name: "${searchName}"`);
+        }
         if (locMatch) searchLoc = locMatch[1].replace(/[\?\.!]/g, '').trim();
         const searchEpic = epicMatch ? epicMatch[0].toUpperCase() : null;
         
@@ -55,9 +107,27 @@ router.post('/', async (req, res) => {
         }
 
         if (contextType === 'find_booth' || contextType === 'no_voter_id' || searchEpic || (contextType === 'general' && searchName)) {
-            const results = voterService.searchVoter(searchName, relativeName, searchLoc, searchEpic);
-            if (results && results.length > 0) {
-                const voter = results[0];
+            const results = voterService.searchVoter({ 
+                name: searchName, 
+                relativeName: relativeName, 
+                location: searchLoc, 
+                epicNumber: searchEpic 
+            });
+            
+            // Filter results manually if needed
+            const filteredResults = results ? results.filter(voter => {
+                let matches = true;
+                if (name) {
+                    if (!voter.name || typeof voter.name !== 'string' || !voter.name.toLowerCase().includes(name.toLowerCase())) matches = false;
+                }
+                if (relativeName) {
+                    if (!voter.relativeName || typeof voter.relativeName !== 'string' || !voter.relativeName.toLowerCase().includes(relativeName.toLowerCase())) matches = false;
+                }
+                return matches;
+            }) : [];
+
+            if (filteredResults && filteredResults.length > 0) {
+                const voter = filteredResults[0];
                 userState.voterDetails = voter; // Store for persistence
                 contextString += `CRITICAL DATA: Voter Found! Name: ${voter.name}, EPIC: ${voter.epicNumber}, Booth: ${voter.boothName}, Part: ${voter.partNumber}, Serial: ${voter.serialNumber}. YOU MUST USE THIS DATA IN STEP 1. `;
                 mapLink = mapService.getBoothLocationLink(voter.boothName);

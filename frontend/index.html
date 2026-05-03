@@ -4,6 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VoteSeva - India Election Assistant</title>
+    <style>
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #2563eb;
+            color: white;
+            padding: 8px;
+            z-index: 100;
+            transition: top 0.3s;
+        }
+        .skip-link:focus { top: 0; }
+
+        body.dark-mode {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        body.dark-mode header, body.dark-mode footer {
+            background-color: #1e293b;
+            border-color: #334155;
+            color: #f8fafc;
+        }
+        body.dark-mode h1 { color: #f8fafc; }
+        body.dark-mode .bg-white { background-color: #1e293b; }
+        body.dark-mode .text-gray-900 { color: #f8fafc; }
+        body.dark-mode .text-gray-800 { color: #e2e8f0; }
+        body.dark-mode .text-gray-600 { color: #94a3b8; }
+        body.dark-mode .border-gray-100 { border-color: #334155; }
+        body.dark-mode #chat-window { background-color: #1e293b; }
+    </style>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -286,49 +316,61 @@
     </style>
 </head>
 <body>
+    <!-- Skip to Content for Accessibility -->
+    <a href="#mainView" class="skip-link">Skip to Content</a>
+
     <div class="app-shell">
-        <div class="top-bar">
-            <select id="languageSelect" class="lang-selector" aria-label="Select Language">
-                <option value="en-IN">English</option>
-                <option value="hi-IN">हिन्दी (Hindi)</option>
-                <option value="te-IN">తెలుగు (Telugu)</option>
-                <option value="ta-IN">தமிழ் (Tamil)</option>
-                <option value="kn-IN">ಕನ್ನಡ (Kannada)</option>
-                <option value="mr-IN">मराठी (Marathi)</option>
-            </select>
-            <div id="progressTracker" class="hidden" style="flex: 1; margin: 0 15px; font-size: 12px; font-weight: 700; color: var(--primary-blue); text-transform: uppercase; letter-spacing: 1px;">
-                <span id="progressText">Stage 1: Getting Started</span>
+        <header class="top-bar" role="banner">
+            <div class="flex items-center gap-2">
+                <select id="languageSelect" class="lang-selector" aria-label="Select Language">
+                    <option value="en-IN">English</option>
+                    <option value="hi-IN">हिन्दी (Hindi)</option>
+                    <option value="te-IN">తెలుగు (Telugu)</option>
+                    <option value="ta-IN">தமிழ் (Tamil)</option>
+                    <option value="kn-IN">ಕನ್ನಡ (Kannada)</option>
+                    <option value="mr-IN">मరాఠీ (Marathi)</option>
+                </select>
+                
+                <!-- Live Status Ticker -->
+                <div class="hidden md:flex items-center gap-2 bg-red-50 px-3 py-1 rounded-full border border-red-100 animate-pulse ml-2">
+                    <span class="flex h-2 w-2 rounded-full bg-red-500"></span>
+                    <span class="text-[10px] font-bold text-red-700 uppercase">Live: Phase 3 Active</span>
+                </div>
+            </div>
+
+            <div id="progressTracker" class="hidden" style="flex: 1; margin: 0 15px; font-size: 11px; font-weight: 700; color: var(--primary-blue); text-transform: uppercase;">
+                <span id="progressText">Stage 1: Started</span>
                 <div style="height: 4px; background: #eee; border-radius: 2px; margin-top: 4px;">
                     <div id="progressBar" style="height: 100%; width: 15%; background: var(--primary-orange); border-radius: 2px; transition: 0.5s;"></div>
                 </div>
             </div>
-            <button id="loginBtn" class="lang-selector" style="margin-right: 10px; background: #e0e7ff; color: var(--primary-blue); border: none;">
-                👤 Login
-            </button>
-            <button id="audioToggle" class="audio-toggle" title="Enable Audio" aria-label="Toggle Audio Assistance">
-                🔈
-            </button>
-        </div>
 
-        <div id="mainView" class="main-view">
-            <!-- Landing -->
+            <div class="flex items-center gap-2">
+                <button id="loginBtn" class="lang-selector" style="background: #e0e7ff; color: var(--primary-blue); border: none;" aria-label="User Profile">👤 Login</button>
+                <button id="themeToggle" class="audio-toggle" aria-label="Toggle Dark Mode">🌙</button>
+                <button id="audioToggle" class="audio-toggle" title="Enable Audio" aria-label="Toggle Audio Assistance">🔈</button>
+            </div>
+        </header>
+
+        <main id="mainView" class="main-view" role="main">
+            <!-- Landing State -->
             <div id="landingState">
                 <div class="landing-hero">
-                    <img src="hero.png" alt="Happy Indian citizens voting" style="width: 100%; max-width: 300px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 20px;">
-                    <h1>VoteSeva</h1>
-                    <p>India's Smart Election Assistant</p>
+                    <img src="hero.png" alt="Happy Indian citizens showing voting ink" style="width: 100%; max-width: 250px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 20px;">
+                    <h1 class="text-2xl font-bold text-blue-900">VoteSeva AI</h1>
+                    <p class="text-gray-600">Your Smart Election Personal Guide</p>
                 </div>
 
                 <div class="action-grid" role="list">
                     <div class="action-card" data-action="find_booth" role="listitem" tabindex="0" aria-label="Find my polling booth">
                         <div class="card-icon">📍</div>
                         <h3>Find My Booth</h3>
-                        <p>Search by EPIC ID or Name</p>
+                        <p>EPIC ID or Name Search</p>
                     </div>
                     <div class="action-card" data-action="no_voter_id" role="listitem" tabindex="0" aria-label="Guidance for voting without ID">
                         <div class="card-icon">🆔</div>
                         <h3>No Voter ID?</h3>
-                        <p>Other valid IDs you can use</p>
+                        <p>Valid alternative IDs</p>
                     </div>
                     <div class="action-card" data-action="at_station" role="listitem" tabindex="0" aria-label="Step by step guide at polling station">
                         <div class="card-icon">🏛️</div>
@@ -338,62 +380,68 @@
                     <div class="action-card" id="practiceBtn" role="listitem" tabindex="0" aria-label="Practice using an EVM machine">
                         <div class="card-icon">🗳️</div>
                         <h3>Practice Vote</h3>
-                        <p>Try the EVM Simulator</p>
+                        <p>EVM Machine Simulator</p>
                     </div>
                 </div>
-                <div style="margin-top: 40px; text-align: center; color: var(--primary-blue); font-weight: 600;">
-                    <p>👆 Tap a picture to start</p>
+                <div style="margin-top: 30px; text-align: center; color: var(--primary-blue); font-weight: 600;">
+                    <p>👆 Tap an action to begin</p>
                 </div>
             </div>
 
-            <!-- Chat -->
-            <div id="chatArea" class="hidden">
-                <div id="chatMessages"></div>
-                <div id="mapContainer" class="hidden" style="margin-top: 20px; border-radius: 20px; overflow: hidden; border: 1px solid #ddd;">
-                    <iframe id="mapFrame" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            <!-- Chat Area -->
+            <div id="chatArea" class="hidden flex-1 flex flex-col">
+                <div id="chatMessages" class="flex-1 space-y-4" role="log" aria-live="polite" aria-relevant="additions text"></div>
+                <div id="mapContainer" class="hidden mt-4 rounded-2xl overflow-hidden border-2 border-gray-100 shadow-inner">
+                    <iframe id="mapFrame" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy" title="Interactive Map to Polling Station"></iframe>
                 </div>
             </div>
-        </div>
+        </main>
 
-        <div class="input-bar">
-            <button id="backBtn" class="circle-btn hidden" style="background: #f1f5f9; color: #64748b;">🏠</button>
-            <button id="micBtn" class="circle-btn mic-btn">🎤</button>
-            <input type="text" id="userInput" class="chat-input" placeholder="Type or speak...">
-            <button id="sendBtn" class="circle-btn send-btn">➞</button>
-        </div>
+        <footer class="input-bar" role="contentinfo">
+            <button id="backBtn" class="circle-btn hidden" style="background: #f1f5f9; color: #64748b;" aria-label="Go Home">🏠</button>
+            <button id="micBtn" class="circle-btn mic-btn" aria-label="Voice Input">🎤</button>
+            
+            <div class="flex-1 flex flex-col gap-2">
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" id="action-chips">
+                    <button class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[11px] font-bold border border-blue-100 hover:bg-blue-600 hover:text-white transition-all whitespace-nowrap" onclick="sendAction('Find my booth')">🔍 Find Booth</button>
+                    <button class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-[11px] font-bold border border-red-200 hover:bg-red-600 hover:text-white transition-all whitespace-nowrap" onclick="sendAction('Help, I am lost!')">🆘 Help, I'm Lost!</button>
+                    <button class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[11px] font-bold border border-blue-100 hover:bg-blue-600 hover:text-white transition-all whitespace-nowrap" onclick="sendAction('Practice Voting')">🗳️ Practice</button>
+                </div>
+                <div class="relative flex items-center">
+                    <input type="text" id="userInput" class="chat-input w-full" placeholder="Ask anything about voting..." aria-label="Chat input">
+                    <button id="sendBtn" class="circle-btn send-btn ml-2" aria-label="Send Message">➞</button>
+                </div>
+            </div>
+        </footer>
     </div>
 
-    <!-- Practice EVM Modal -->
-    <div id="evmModal" class="modal hidden">
+    <!-- EVM Simulator Modal -->
+    <div id="evmModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 id="evmTitle" style="margin:0; font-size: 20px;">EVM Simulator</h2>
-                <button id="closeEvm" style="background:none; border:none; font-size: 24px; cursor:pointer;">&times;</button>
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modalTitle" class="text-xl font-bold text-blue-900">EVM Simulator</h2>
+                <button id="closeEvm" class="text-2xl font-bold text-gray-400 hover:text-gray-600" aria-label="Close Modal">&times;</button>
             </div>
-            <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Press the blue button next to your choice.</p>
+            <p class="text-sm text-gray-500 mb-6 font-medium">Step 1: Select your candidate by pressing the BLUE button.</p>
             
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8fafc; border-radius: 8px;">
-                    <span>Lotus (Candidate A)</span>
-                    <button class="evm-btn"></button>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <span class="font-bold text-gray-700">Lotus (Candidate A)</span>
+                    <button class="evm-btn" aria-label="Vote for Candidate A"></button>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8fafc; border-radius: 8px;">
-                    <span>Hand (Candidate B)</span>
-                    <button class="evm-btn"></button>
+                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <span class="font-bold text-gray-700">Hand (Candidate B)</span>
+                    <button class="evm-btn" aria-label="Vote for Candidate B"></button>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8fafc; border-radius: 8px;">
-                    <span>Cycle (Candidate C)</span>
-                    <button class="evm-btn"></button>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8fafc; border-radius: 8px;">
-                    <span>NOTA</span>
-                    <button class="evm-btn"></button>
+                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <span class="font-bold text-gray-700">NOTA (None of the Above)</span>
+                    <button class="evm-btn" aria-label="Vote for NOTA"></button>
                 </div>
             </div>
 
-            <div id="evmFeedback" class="hidden" style="margin-top: 20px; text-align: center; padding: 15px; border-radius: 12px; background: #f0fdf4;">
-                <span style="font-size: 30px;">🔴</span>
-                <p style="margin: 10px 0 0; color: #166534; font-weight: 700;">BEEP! Vote Recorded.</p>
+            <div id="evmFeedback" class="hidden mt-6 text-center p-4 rounded-xl bg-green-50 border border-green-100">
+                <span class="text-3xl">🔴</span>
+                <p class="mt-2 text-green-800 font-bold">BEEP! Your vote has been recorded.</p>
             </div>
         </div>
     </div>
