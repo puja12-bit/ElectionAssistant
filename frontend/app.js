@@ -1,387 +1,460 @@
-import { decisionEngine } from './decisionEngine.js';
+/**
+ * VOTESEVA — INDIA ELECTION ASSISTANT
+ * Core Frontend Logic
+ */
 
-const landingState = document.getElementById('landingState');
-const chatArea = document.getElementById('chatArea');
-const chatMessages = document.getElementById('chatMessages');
-const userInput = document.getElementById('userInput');
+// Global State
+let userLanguage = 'en-IN';
+let isAudioEnabled = false;
+let isDarkMode = false;
+let voterDetails = null;
+let currentStage = 1; // 1: Welcome, 2: Found, 3: Guided, 4: Complete
+let sessionId = null;
+
+// DOM Elements
+const onboardingScreen = document.getElementById('onboardingScreen');
+const appShell = document.getElementById('appShell');
+const chatPanel = document.getElementById('chatPanel');
+const landingPanel = document.getElementById('landingPanel');
+const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const micBtn = document.getElementById('micBtn');
 const backBtn = document.getElementById('backBtn');
-const languageSelect = document.getElementById('languageSelect');
-const themeToggle = document.getElementById('themeToggle');
-const audioToggle = document.getElementById('audioToggle');
+const mainScroll = document.getElementById('mainScroll');
 
-// State
-let sessionId = localStorage.getItem('voteSevaSessionId') || ('session_' + Math.random().toString(36).substr(2, 9));
-localStorage.setItem('voteSevaSessionId', sessionId);
+// Onboarding Elements
+const obTabs = document.querySelectorAll('.ob-tab');
+const obPanels = document.querySelectorAll('.ob-panel');
+const epicInput = document.getElementById('epicInput');
+const verifyEpicBtn = document.getElementById('verifyEpicBtn');
+const nameInput = document.getElementById('nameInput');
+const relativeNameInput = document.getElementById('relativeNameInput');
+const verifyNameBtn = document.getElementById('verifyNameBtn');
+const continueGuestBtn = document.getElementById('continueGuestBtn');
+const obLoading = document.getElementById('obLoading');
+const obNotFound = document.getElementById('obNotFound');
+const obFound = document.getElementById('obFound');
 
-let isUserLoggedIn = false;
-let userProfile = null;
+// Dashboard Elements
+const heroGreeting = document.getElementById('heroGreeting');
+const heroTitle = document.getElementById('heroTitle');
+const vfcSection = document.getElementById('voterFoundSection');
+const vfcPrompt = document.getElementById('voterSearchPrompt');
+const sidebarVoter = document.getElementById('sidebarVoterCard');
+const sidebarGuest = document.getElementById('sidebarGuestBanner');
 
-let isAudioEnabled = false;
-let currentLanguage = 'en-IN';
-let currentStage = 1;
-
-const progressTracker = document.getElementById('progressTracker');
-const progressText = document.getElementById('progressText');
-const progressBar = document.getElementById('progressBar');
-
-function updateStage(stage) {
-    currentStage = stage;
-    progressTracker.classList.remove('hidden');
-    const stages = {
-        1: { text: "Stage 1: Getting Started", width: "15%" },
-        2: { text: "Stage 2: Checking Eligibility", width: "30%" },
-        3: { text: "Stage 3: Finding Details", width: "50%" },
-        4: { text: "Stage 4: Locating Booth", width: "70%" },
-        5: { text: "Stage 5: At Polling Station", width: "90%" },
-        6: { text: "Stage 6: Vote Completed", width: "100%" }
-    };
-    const s = stages[stage] || stages[1];
-    progressText.innerText = s.text;
-    progressBar.style.width = s.width;
-}
-
-// --- Audio Management ---
-audioToggle.addEventListener('click', () => {
-    isAudioEnabled = !isAudioEnabled;
-    audioToggle.classList.toggle('active', isAudioEnabled);
-    audioToggle.innerText = isAudioEnabled ? '🔊' : '🔈';
-    if (!isAudioEnabled) window.speechSynthesis.cancel();
-});
-
-function speakText(text, lang = currentLanguage) {
-    if (!isAudioEnabled) return;
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // Stop current
-        const cleanText = text.replace(/[*#]/g, '').replace(/<[^>]*>?/gm, '');
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = lang;
-        utterance.rate = 0.85;
-        window.speechSynthesis.speak(utterance);
-    }
-}
-
-// --- Language Management ---
-languageSelect.addEventListener('change', (e) => {
-    currentLanguage = e.target.value;
-    updateUILanguage();
-});
-
-function updateUILanguage() {
-    const texts = {
-        'en-IN': { hero: 'VoteSeva', subtitle: "India's Smart Election Assistant", cards: ['Find My Booth', 'No Voter ID?', 'At the Booth', 'Practice Vote'] },
-        'hi-IN': { hero: 'वोटसेवा', subtitle: "भारत का स्मार्ट चुनाव सहायक", cards: ['मेरा बूथ खोजें', 'वोटर आईडी नहीं है?', 'बूथ पर हूँ', 'वोट का अभ्यास'] },
-        'te-IN': { hero: 'ఓట్‌సేవ', subtitle: "భారతదేశపు స్మార్ట్ ఎన్నికల సహాయకుడు", cards: ['నా బూత్ కనుగొను', 'ఓటర్ ఐడి లేదా?', 'బూత్ వద్ద ఉన్నాను', 'ఓటు సాధన'] },
-        'ta-IN': { hero: 'வோட்சேवा', subtitle: "இந்தியாவின் ஸ்மார்ட் தேர்தல் உதவியாளர்", cards: ['எனது சாவடியைக் கண்டுபிடி', 'வாக்காளர் அடையாள அட்டை இல்லையா?', 'சாவடியில் இருக்கிறேன்', 'வாக்கு பயிற்சி'] },
-        'mr-IN': { hero: 'वोटसेवा', subtitle: "भारताचे स्मार्ट निवडणूक साहाय्यक", cards: ['माझे मतदान केंद्र शोधा', 'मतदार ओळखपत्र नाही?', 'मी मतदान केंद्रावर आहे', 'मतदान सराव'] }
-    };
-    const t = texts[currentLanguage] || texts['en-IN'];
-    document.querySelector('.landing-hero h1').innerText = t.hero;
-    document.querySelector('.landing-hero p').innerText = t.subtitle;
+// Init
+window.addEventListener('DOMContentLoaded', () => {
+    initAccessibility();
+    initEventListeners();
+    generateSessionId();
     
-    // Translate Cards
-    const cardTitles = document.querySelectorAll('.action-card h3');
-    t.cards.forEach((txt, i) => {
-        if (cardTitles[i]) cardTitles[i].innerText = txt;
+    // Check if user already has data in localStorage
+    const savedVoter = localStorage.getItem('voterData');
+    if (savedVoter) {
+        voterDetails = JSON.parse(savedVoter);
+        loadVoterInApp(voterDetails);
+    }
+});
+
+function generateSessionId() {
+    sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
+}
+
+// Onboarding / Auth Logic
+function initEventListeners() {
+    // Tab switching
+    obTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            obTabs.forEach(t => t.classList.remove('active'));
+            obPanels.forEach(p => p.classList.add('hidden'));
+            tab.classList.add('active');
+            document.getElementById(`panel-${tab.dataset.tab}`).classList.remove('hidden');
+        });
     });
+
+    // Verification
+    verifyEpicBtn.addEventListener('click', () => handleVerification('epic'));
+    verifyNameBtn.addEventListener('click', () => handleVerification('name'));
+    continueGuestBtn.addEventListener('click', () => launchApp(null));
+    
+    document.getElementById('tryAgainBtn').addEventListener('click', resetOnboarding);
+    document.getElementById('guestFromNotFoundBtn').addEventListener('click', () => launchApp(null));
+    document.getElementById('enterAppBtn').addEventListener('click', () => launchApp(voterDetails));
+
+    // Dashboard Actions
+    document.querySelectorAll('.sidebar-nav-item, .action-card').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const action = btn.dataset.action || btn.id;
+            handleQuickAction(action);
+        });
+    });
+
+    // Chat
+    sendBtn.addEventListener('click', handleSend);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleSend();
+    });
+
+    // Back to home
+    backBtn.addEventListener('click', showDashboard);
+
+    // Audio/Mic
+    micBtn.addEventListener('click', toggleSpeechRecognition);
 }
 
-// --- Format Output ---
-function formatResponse(text) {
-    // 1. Remove markdown bolding ** 
-    let clean = text.replace(/\*\*(.*?)\*\*/g, '$1');
-    clean = clean.replace(/\*(.*?)\*/g, '$1');
+async function handleVerification(type) {
+    const panels = document.querySelectorAll('.ob-panel');
+    panels.forEach(p => p.classList.add('hidden'));
+    obLoading.classList.remove('hidden');
 
-    const stepTitles = {
-        'en-IN': ['Step 1: What to do now', 'Step 2: What happens next', 'Step 3: What to say', 'Step 4: Important note'],
-        'hi-IN': ['चरण 1: अब क्या करें', 'चरण 2: आगे क्या होगा', 'चरण 3: क्या कहें', 'चरण 4: महत्वपूर्ण नोट'],
-        'te-IN': ['దశ 1: ఇప్పుడు ఏమి చేయాలి', 'దశ 2: తరువాత ఏమి జరుగుతుంది', 'దశ 3: ఏమి చెప్పాలి', 'దశ 4: ముఖ్యమైన గమనిక'],
-        'ta-IN': ['படி 1: இப்போது என்ன செய்வது', 'படி 2: அடுத்து என்ன நடக்கும்', 'படி 3: என்ன சொல்வது', 'படி 4: முக்கிய குறிப்பு'],
-        'kn-IN': ['ಹಂತ 1: ಈಗ ಏನು ಮಾಡಬೇಕು', 'ಹಂತ 2: ಮುಂದೆ ಏನಾಗುತ್ತದೆ', 'ಹಂತ 3: ಏನು ಹೇಳಬೇಕು', 'ಹಂತ 4: ಪ್ರಮುಖ ಟಿಪ್ಪಣಿ'],
-        'mr-IN': ['पायरी 1: आता काय करावे', 'पायरी 2: पुढे काय होईल', 'पायरी 3: काय बोलावे', 'पायरी 4: महत्वाची टीप']
-    };
-
-    const currentTitles = stepTitles[currentLanguage] || stepTitles['en-IN'];
-    
-    // Convert URLs to clickable links
-    const formattedText = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:var(--primary-blue); font-weight:600;">$1</a>');
-    
-    const steps = formattedText.split(/Step \d+:|चरण \d+:|దశ \d+:|படி \d+:|ಹಂತ \d+:|ಪಾಯರಿ \d+:/i).filter(s => s.trim());
-    
-    if (steps.length >= 2) {
-        return `<div class="step-container">` + 
-            steps.map((s, i) => `
-                <div class="step-item">
-                    <b>${currentTitles[i] || 'Step ' + (i+1)}</b>
-                    ${s.trim()}
-                </div>
-            `).join('') + `</div>`;
-    } else {
-        return formattedText.replace(/\n/g, '<br>');
-    }
-}
-
-// --- Chat Logic ---
-function addMessage(text, sender) {
-    if (!landingState.classList.contains('hidden')) {
-        landingState.classList.add('hidden');
-        chatArea.classList.remove('hidden');
-        backBtn.classList.remove('hidden');
+    const searchData = {};
+    if (type === 'epic') searchData.epic = epicInput.value.trim().toUpperCase();
+    else {
+        searchData.name = nameInput.value.trim();
+        searchData.relativeName = relativeNameInput.value.trim();
     }
 
-    const msgDiv = document.createElement('div');
-    msgDiv.classList.add('message', sender);
-    
-    if (sender === 'bot') {
-        const formatted = formatResponse(text);
-        msgDiv.innerHTML = formatted;
+    try {
+        const response = await fetch('/api/auth/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(searchData)
+        });
         
-        // Add individual listen button
-        const listenBtn = document.createElement('button');
-        listenBtn.className = 'listen-btn';
-        listenBtn.innerHTML = '🔊';
-        listenBtn.onclick = () => speakText(text);
-        msgDiv.appendChild(listenBtn);
+        const data = await response.json();
+        obLoading.classList.add('hidden');
 
-        speakText(text);
-    } else {
-        msgDiv.innerText = text;
+        if (data.success) {
+            voterDetails = data.voter;
+            showFoundVoter(voterDetails);
+        } else {
+            obNotFound.classList.remove('hidden');
+        }
+    } catch (error) {
+        obLoading.classList.add('hidden');
+        alert("Server error. Please try again.");
     }
-    
-    chatMessages.appendChild(msgDiv);
-    
-    // Add Share Location button if AI asks for it
-    if (sender === 'bot' && (text.toLowerCase().includes('location') || text.toLowerCase().includes('area'))) {
-        const locBtn = document.createElement('button');
-        locBtn.className = 'quick-btn';
-        locBtn.style.marginTop = '10px';
-        locBtn.innerHTML = '📍 Share My Location';
-        locBtn.onclick = () => getGeoLocation();
-        chatMessages.appendChild(locBtn);
-    }
-
-    mainView.scrollTop = mainView.scrollHeight;
 }
 
-// Global Clipboard Helper
-window.copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-        alert("Address copied to clipboard!");
-    });
-};
-
-// Global action helper for chips
-window.sendAction = (action) => {
-    if (action === "Help, I am lost!") {
-        sendMessage("SOS - I am lost and need help finding my booth!");
-    } else {
-        sendMessage(action);
-    }
-};
-
-function getGeoLocation() {
-    if (!navigator.geolocation) {
-        addMessage("Geolocation is not supported by your browser.", 'bot');
-        return;
-    }
-    
-    addMessage("Searching for your coordinates...", 'bot');
-    navigator.geolocation.getCurrentPosition(async (position) => {
-        const { latitude, longitude } = position.coords;
-        sendMessage(`My coordinates are ${latitude}, ${longitude}. Please find the nearest booth.`);
-    }, () => {
-        addMessage("Please enable location access in your browser settings.", 'bot');
-    });
+function showFoundVoter(voter) {
+    obFound.classList.remove('hidden');
+    document.getElementById('obFoundName').innerText = `Welcome, ${voter.name}!`;
+    document.getElementById('obVoterPreview').innerHTML = `
+        <div class="ob-vp-row"><span>EPIC No.</span><span>${voter.epicNumber}</span></div>
+        <div class="ob-vp-row"><span>Booth Name</span><span>${voter.boothName}</span></div>
+        <div class="ob-vp-row"><span>Location</span><span>${voter.location}</span></div>
+    `;
 }
 
-async function sendMessage(textOverride = null) {
-    const text = textOverride || userInput.value.trim();
+function resetOnboarding() {
+    obNotFound.classList.add('hidden');
+    document.getElementById(`panel-epic`).classList.remove('hidden');
+}
+
+function launchApp(voter) {
+    onboardingScreen.style.display = 'none';
+    appShell.style.display = 'grid';
+    
+    if (voter) {
+        localStorage.setItem('voterData', JSON.stringify(voter));
+        loadVoterInApp(voter);
+        updateJourney(2);
+        addBotMessage(`Namaste ${voter.name}! I have loaded your details. Your polling station is **${voter.boothName}**. How can I help you reach there?`);
+    } else {
+        addBotMessage("Namaste! You are in Guest Mode. I can help you with general voting information, practice simulator, or checking valid IDs.");
+    }
+}
+
+function loadVoterInApp(voter) {
+    heroGreeting.innerText = `Welcome back, ${voter.name}! 👋`;
+    
+    // Update sidebar
+    sidebarGuest.style.display = 'none';
+    sidebarVoter.style.display = 'block';
+    document.getElementById('sidebarName').innerText = voter.name;
+    document.getElementById('sidebarEpic').innerText = `EPIC: ${voter.epicNumber}`;
+    document.getElementById('sidebarBooth').innerText = `📍 ${voter.boothName}`;
+    document.getElementById('sidebarSerial').innerText = `#${voter.serialNumber}`;
+
+    // Update right panel
+    vfcPrompt.style.display = 'none';
+    vfcSection.style.display = 'block';
+    document.getElementById('vfcName').innerText = voter.name;
+    document.getElementById('vfcEpic').innerText = `EPIC: ${voter.epicNumber}`;
+    document.getElementById('vfcBooth').innerText = voter.boothName;
+    document.getElementById('vfcPart').innerText = voter.partNumber;
+    document.getElementById('vfcSerial').innerText = voter.serialNumber;
+    document.getElementById('vfcLocation').innerText = voter.location;
+}
+
+// Chat Logic
+async function handleSend() {
+    const text = chatInput.value.trim();
     if (!text) return;
 
-    addMessage(text, 'user');
-    userInput.value = '';
-
-    // 1. Try Local Decision Engine first
-    const localDecision = decisionEngine(text);
-    if (localDecision) {
-        setTimeout(() => {
-            const reply = typeof localDecision === 'string' ? localDecision : localDecision.reply;
-            addMessage(reply, 'bot');
-            if (localDecision.map) {
-                document.getElementById('mapContainer').classList.remove('hidden');
-                document.getElementById('mapFrame').src = `https://www.google.com/maps?q=${localDecision.map.lat},${localDecision.map.lng}&output=embed`;
-            }
-        }, 500);
-        return;
-    }
-
-    // 2. Fallback to Gemini Backend
+    addUserMessage(text);
+    chatInput.value = '';
+    
+    // Show loading
+    const loadingId = addLoadingIndicator();
+    
     try {
-        const loadingMsg = document.createElement('div');
-        loadingMsg.className = 'message bot loading-status';
-        loadingMsg.innerHTML = '<i>🔍 Searching ECI Database...</i>';
-        chatMessages.appendChild(loadingMsg);
-
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                sessionId,
                 query: text,
-                language: currentLanguage,
-                contextType: 'general'
+                sessionId: sessionId,
+                language: userLanguage,
+                voterDetails: voterDetails // Send context
             })
         });
-
-        chatMessages.removeChild(loadingMsg);
+        
         const data = await response.json();
+        removeLoadingIndicator(loadingId);
         
-        // Handle Map rendering for Directions/SOS
-        if (data.mapLink) {
-            document.getElementById('mapContainer').classList.remove('hidden');
-            document.getElementById('mapFrame').src = data.mapLink.includes('output=embed') ? data.mapLink : `${data.mapLink}&output=embed`;
-        } else if (data.type !== 'booth_info') {
-            document.getElementById('mapContainer').classList.add('hidden');
+        if (data.reply) {
+            addBotMessage(data.reply);
+            if (data.mapLink) showMap(data.mapLink);
+            if (data.stage) updateJourney(data.stage);
         }
-
-        if (data.reply) addMessage(data.reply, 'bot');
-        if (data.stage) updateStage(data.stage);
     } catch (error) {
-        addMessage("Sorry, I cannot connect. Please check your internet.", 'bot');
+        removeLoadingIndicator(loadingId);
+        addBotMessage("I'm having trouble connecting to my brain. Please try again in a moment.");
     }
 }
 
-// --- Voice Input ---
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (SpeechRecognition) {
-    const recognition = new SpeechRecognition();
-    recognition.lang = currentLanguage;
+function addUserMessage(text) {
+    if (landingPanel.style.display !== 'none') showChat();
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message-wrapper user';
+    wrapper.innerHTML = `<div class="message user">${text}</div>`;
+    chatPanel.appendChild(wrapper);
+    scrollToBottom();
+}
+
+function addBotMessage(text) {
+    if (landingPanel.style.display !== 'none') showChat();
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message-wrapper bot';
     
-    recognition.onresult = (e) => {
-        userInput.value = e.results[0][0].transcript;
-        sendMessage();
-    };
-
-    micBtn.onclick = () => {
-        recognition.lang = currentLanguage;
-        recognition.start();
-        micBtn.classList.add('recording');
-    };
-    recognition.onend = () => micBtn.classList.remove('recording');
+    // Parse markdown-like bold
+    const formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    wrapper.innerHTML = `
+        <div class="message bot">
+            <div class="msg-text">${formatted}</div>
+            <button class="listen-btn" onclick="speakText(this)" aria-label="Listen to message">🔊</button>
+        </div>
+    `;
+    chatPanel.appendChild(wrapper);
+    scrollToBottom();
+    
+    if (isAudioEnabled) speak(text);
 }
 
-// --- Listeners ---
-sendBtn.addEventListener('click', () => sendMessage());
-userInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        sendMessage();
-    }
-});
-backBtn.onclick = () => {
-    landingState.classList.remove('hidden');
-    chatArea.classList.add('hidden');
+function addLoadingIndicator() {
+    const id = 'load_' + Date.now();
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message-wrapper bot';
+    wrapper.id = id;
+    wrapper.innerHTML = `
+        <div class="message bot">
+            <div class="loading-dots"><span></span><span></span><span></span></div>
+        </div>
+    `;
+    chatPanel.appendChild(wrapper);
+    scrollToBottom();
+    return id;
+}
+
+function removeLoadingIndicator(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
+function showChat() {
+    landingPanel.classList.add('hidden');
+    chatPanel.classList.remove('hidden');
+    backBtn.classList.remove('hidden');
+}
+
+function showDashboard() {
+    chatPanel.classList.add('hidden');
+    landingPanel.classList.remove('hidden');
     backBtn.classList.add('hidden');
-    progressTracker.classList.add('hidden');
     document.getElementById('mapContainer').classList.add('hidden');
-};
+}
 
-document.querySelectorAll('.action-card').forEach(card => {
-    card.onclick = () => {
-        // Clear previous conversation for a fresh start
-        chatMessages.innerHTML = '';
-        document.getElementById('mapContainer').classList.add('hidden');
+function showMap(url) {
+    const container = document.getElementById('mapContainer');
+    const frame = document.getElementById('mapFrame');
+    const link = document.getElementById('mapDirectLink');
+    
+    container.classList.remove('hidden');
+    frame.src = url;
+    link.href = url;
+    scrollToBottom();
+}
+
+function scrollToBottom() {
+    mainScroll.scrollTop = mainScroll.scrollHeight;
+}
+
+// Journey Management
+function updateJourney(stage) {
+    currentStage = stage;
+    for (let i = 1; i <= 4; i++) {
+        const step = document.getElementById(`jStep${i}`);
+        const line = document.getElementById(`jLine${i}`);
         
-        const action = card.dataset.action;
-        if (action === 'find_booth') {
-            updateStage(3);
-            sendMessage("I want to find my polling booth.");
-        } else if (action === 'no_voter_id') {
-            updateStage(2);
-            sendMessage("I don't have a voter ID. Can I still vote?");
-        } else if (action === 'at_station') {
-            updateStage(5);
-            sendMessage("I am at the polling booth. What should I do?");
+        step.classList.remove('active', 'done');
+        if (line) line.classList.remove('done');
+        
+        if (i < stage) {
+            step.classList.add('done');
+            if (line) line.classList.add('done');
+        } else if (i === stage) {
+            step.classList.add('active');
         }
-    };
-});
+    }
+}
 
-// EVM Simulator
-const practiceBtn = document.getElementById('practiceBtn');
+// Accessibility & UI
+function initAccessibility() {
+    const accBtn = document.getElementById('accBtn');
+    const accModal = document.getElementById('accModal');
+    const closeAcc = document.getElementById('closeAcc');
+    
+    accBtn.addEventListener('click', () => accModal.classList.remove('hidden'));
+    closeAcc.addEventListener('click', () => accModal.classList.add('hidden'));
+
+    // Toggles
+    document.getElementById('hcToggle').addEventListener('click', function() {
+        this.classList.toggle('on');
+        document.body.classList.toggle('high-contrast');
+    });
+    document.getElementById('ltToggle').addEventListener('click', function() {
+        this.classList.toggle('on');
+        document.body.classList.toggle('large-text');
+    });
+    document.getElementById('dyToggle').addEventListener('click', function() {
+        this.classList.toggle('on');
+        document.body.classList.toggle('dyslexic');
+    });
+    
+    // Theme
+    document.getElementById('themeBtn').addEventListener('click', () => {
+        isDarkMode = !isDarkMode;
+        document.body.classList.toggle('dark-mode');
+        document.getElementById('themeBtn').innerText = isDarkMode ? '☀️' : '🌙';
+    });
+
+    // Audio
+    document.getElementById('audioBtn').addEventListener('click', () => {
+        isAudioEnabled = !isAudioEnabled;
+        document.getElementById('audioBtn').classList.toggle('active');
+        document.getElementById('audioBtn').innerText = isAudioEnabled ? '🔊' : '🔈';
+    });
+}
+
+// Speech Functions
+function toggleSpeechRecognition() {
+    if (!('webkitSpeechRecognition' in window)) {
+        alert("Speech recognition is not supported in this browser.");
+        return;
+    }
+
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = userLanguage;
+    
+    recognition.onstart = () => {
+        micBtn.classList.add('recording');
+        chatInput.placeholder = "Listening...";
+    };
+    
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        chatInput.value = text;
+        handleSend();
+    };
+    
+    recognition.onend = () => {
+        micBtn.classList.remove('recording');
+        chatInput.placeholder = "Ask anything about voting...";
+    };
+    
+    recognition.start();
+}
+
+function speak(text) {
+    if (!isAudioEnabled) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = userLanguage;
+    window.speechSynthesis.speak(utterance);
+}
+
+function speakText(btn) {
+    const text = btn.previousElementSibling.innerText;
+    speak(text);
+}
+
+// Quick Actions Helper
+function sendAction(text) {
+    chatInput.value = text;
+    handleSend();
+}
+
+function handleQuickAction(action) {
+    switch(action) {
+        case 'find_booth':
+        case 'findBoothCard':
+            sendAction("Help me find my booth");
+            break;
+        case 'no_voter_id':
+        case 'noIdCard':
+            sendAction("What if I don't have a voter ID?");
+            break;
+        case 'practice':
+        case 'practiceCardBtn':
+            document.getElementById('evmModal').classList.remove('hidden');
+            break;
+        case 'at_the_booth':
+        case 'atBoothCard':
+            sendAction("Guide me through the process at the booth");
+            break;
+        case 'sos':
+            sendAction("SOS! I am lost and need help reaching my booth.");
+            break;
+        case 'fact_check':
+            sendAction("How do I verify election news?");
+            break;
+    }
+}
+
+// EVM Simulator Logic
 const evmModal = document.getElementById('evmModal');
 const closeEvm = document.getElementById('closeEvm');
 const evmBtns = document.querySelectorAll('.evm-btn');
+const evmFeedback = document.getElementById('evmFeedback');
 
-practiceBtn.onclick = () => evmModal.classList.remove('hidden');
-closeEvm.onclick = () => evmModal.classList.add('hidden');
-evmBtns.forEach(btn => {
-    btn.onclick = () => {
-        document.getElementById('evmFeedback').classList.remove('hidden');
-        new Audio("https://www.soundjay.com/buttons/beep-01a.mp3").play().catch(()=>{});
-        setTimeout(() => {
-            evmFeedback.classList.add('hidden');
-            evmModal.classList.add('hidden');
-            updateStage(6);
-            addMessage("Practice complete! You now know how to use the EVM. Great job!", 'bot');
-        }, 2000);
-    };
+closeEvm.addEventListener('click', () => {
+    evmModal.classList.add('hidden');
+    evmFeedback.classList.add('hidden');
 });
 
-// Accessibility Panel Logic
-const accessibilityBtn = document.getElementById('accessibilityBtn');
-const accessibilityPanel = document.getElementById('accessibilityPanel');
-const closeAcc = document.getElementById('closeAcc');
-
-accessibilityBtn.onclick = () => accessibilityPanel.classList.remove('hidden');
-closeAcc.onclick = () => accessibilityPanel.classList.add('hidden');
-
-document.getElementById('highContrastToggle').onclick = () => {
-    document.body.classList.toggle('high-contrast');
-    const isHC = document.body.classList.contains('high-contrast');
-    localStorage.setItem('highContrast', isHC);
-};
-
-document.getElementById('largeTextToggle').onclick = () => {
-    document.body.classList.toggle('large-text');
-};
-
-document.getElementById('dyslexicFontToggle').onclick = () => {
-    document.body.classList.toggle('dyslexic-mode');
-};
-
-// Google Auth Logic (100% Google Service Score)
-const googleLoginBtn = document.getElementById('googleLoginBtn');
-if (googleLoginBtn) {
-    googleLoginBtn.onclick = async () => {
-        try {
-            // Simulate Google OAuth2 Flow
-            const mockIdToken = "dummy_google_token";
-            const response = await fetch('/api/auth/verify-google-token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken: mockIdToken })
-            });
-            const data = await response.json();
-            if (data.success) {
-                isUserLoggedIn = true;
-                userProfile = data.user;
-                document.getElementById('loginSection').innerHTML = `
-                    <div class="flex items-center gap-2 bg-green-50 px-2 py-1 rounded-lg border border-green-200">
-                        <span class="text-[10px] font-bold text-green-700">VERIFIED: ${userProfile.name}</span>
-                    </div>
-                `;
-                addMessage(`Welcome, ${userProfile.name}! Your identity is verified.`, 'bot');
-            }
-        } catch (e) {
-            console.error("Auth failed", e);
-        }
-    };
-}
-
-window.onload = () => {
-    if (localStorage.getItem('highContrast') === 'true') {
-        document.body.classList.add('high-contrast');
-    }
-    updateUILanguage();
-};
+evmBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('evmScreen').innerText = "VOTE RECORDED";
+        evmFeedback.classList.remove('hidden');
+        // Play beep sound if possible
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // 880Hz
+        oscillator.connect(audioCtx.destination);
+        oscillator.start();
+        setTimeout(() => oscillator.stop(), 500);
+    });
+});

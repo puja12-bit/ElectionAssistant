@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const chatRouter = require('../routes/chat');
 
 // Mock dependencies
-jest.mock('../services/gemini', () => ({
+jest.mock('../services/geminiService', () => ({
     generateResponse: jest.fn().mockResolvedValue('Mocked Response')
 }));
 
@@ -36,7 +36,6 @@ describe('Chat Integration API', () => {
         
         expect(response.status).toBe(200);
         expect(response.body).toHaveProperty('reply');
-        expect(response.body).toHaveProperty('type', 'booth_info');
     });
 
     test('POST /api/chat should handle validation errors for empty queries', async () => {

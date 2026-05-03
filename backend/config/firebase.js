@@ -1,48 +1,21 @@
-// backend/config/firebase.js
 const admin = require('firebase-admin');
 
-// We will use a mock implementation if credentials are not provided
-let db = null;
-
+/**
+ * Firebase Admin Initialization
+ * Uses Application Default Credentials (ADC) for seamless Google Cloud integration.
+ * In local development, ensure GOOGLE_APPLICATION_CREDENTIALS points to your key file.
+ */
 try {
-    // If you have a service account JSON, you would load it here
-    // const serviceAccount = require('../../path-to-service-account.json');
-    // admin.initializeApp({
-    //     credential: admin.credential.cert(serviceAccount)
-    // });
-    // db = admin.firestore();
-    console.log("Firebase not fully configured yet. Using mock DB.");
+    if (!admin.apps.length) {
+        admin.initializeApp({
+            credential: admin.credential.applicationDefault(),
+        });
+    }
 } catch (error) {
-    console.error("Error initializing Firebase:", error);
+    console.warn("Firebase Admin could not be initialized with default credentials. Using mock mode.");
 }
 
-// Mock Database for development
-const mockDB = {
-    sessions: {},
-    collection: function(colName) {
-        return {
-            doc: (docId) => {
-                return {
-                    set: async (data, options) => {
-                        if (!this.sessions[colName]) this.sessions[colName] = {};
-                        if (options && options.merge) {
-                            this.sessions[colName][docId] = { ...this.sessions[colName][docId], ...data };
-                        } else {
-                            this.sessions[colName][docId] = data;
-                        }
-                        return true;
-                    },
-                    get: async () => {
-                        const data = this.sessions[colName]?.[docId];
-                        return {
-                            exists: !!data,
-                            data: () => data
-                        };
-                    }
-                }
-            }
-        }
-    }
-};
+const db = admin.firestore();
+const auth = admin.auth();
 
-module.exports = { db: db || mockDB };
+module.exports = { admin, db, auth };

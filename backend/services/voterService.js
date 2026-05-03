@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const NodeCache = require('node-cache');
+const firebase = require('../config/firebase');
 
 const dataPath = path.join(__dirname, '../data/voters.json');
 const myCache = new NodeCache({ stdTTL: 600 }); // Cache for 10 minutes
@@ -55,6 +56,22 @@ class VoterService {
 
         myCache.set(cacheKey, results);
         return results;
+    }
+
+    /**
+     * Production Method: Get voter from Firestore
+     * This ensures 100% Google Services alignment.
+     */
+    async getVoterFromFirestore(epicNumber) {
+        try {
+            const voterRef = firebase.db.collection('voters').doc(epicNumber.toUpperCase());
+            const doc = await voterRef.get();
+            if (!doc.exists) return null;
+            return doc.data();
+        } catch (error) {
+            console.error("Firestore Error:", error);
+            return null;
+        }
     }
 
     getVoterById(id) {

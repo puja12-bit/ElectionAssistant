@@ -71,7 +71,7 @@ class GeminiService {
         const fullPrompt = `${systemInstruction}\n\nUser Context: ${context}\nTarget Language: ${language}\nUser Query: ${prompt}\n\nCRITICAL: Respond ONLY in ${language}. DO NOT USE ENGLISH if target is Hindi/Telugu/etc. NO MIXING.`;
 
         try {
-            const model = aiInstance.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const model = aiInstance.getGenerativeModel({ model: "gemini-1.5-flash" });
             const result = await model.generateContent(fullPrompt);
             const response = await result.response;
             return response.text();
