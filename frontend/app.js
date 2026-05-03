@@ -1,387 +1,624 @@
-import { decisionEngine } from './decisionEngine.js';
+'use strict';
 
-const landingState = document.getElementById('landingState');
-const chatArea = document.getElementById('chatArea');
-const chatMessages = document.getElementById('chatMessages');
-const userInput = document.getElementById('userInput');
-const sendBtn = document.getElementById('sendBtn');
-const micBtn = document.getElementById('micBtn');
-const backBtn = document.getElementById('backBtn');
-const languageSelect = document.getElementById('languageSelect');
-const themeToggle = document.getElementById('themeToggle');
-const audioToggle = document.getElementById('audioToggle');
+// ── SESSION ───────────────────────────────────────────────────────────────────
+const sessionId = (() => {
+    let id = localStorage.getItem('voteSevaSessionId');
+    if (!id) { id = 'session_' + Math.random().toString(36).substr(2, 9); localStorage.setItem('voteSevaSessionId', id); }
+    return id;
+})();
 
-// State
-let sessionId = localStorage.getItem('voteSevaSessionId') || ('session_' + Math.random().toString(36).substr(2, 9));
-localStorage.setItem('voteSevaSessionId', sessionId);
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let currentLanguage = localStorage.getItem('vsLang') || 'en-IN';
+let isAudioEnabled = localStorage.getItem('vsAudio') === 'true';
+let currentJourneyStep = 2; // 1=Check Roll, 2=Find Booth, 3=At Station, 4=Vote Cast
 
-let isUserLoggedIn = false;
-let userProfile = null;
+// ── DOM REFS ──────────────────────────────────────────────────────────────────
+const chatPanel      = document.getElementById('chatPanel');
+const landingPanel   = document.getElementById('landingPanel');
+const chatInput      = document.getElementById('chatInput');
+const sendBtn        = document.getElementById('sendBtn');
+const micBtn         = document.getElementById('micBtn');
+const backBtn        = document.getElementById('backBtn');
+const mapContainer   = document.getElementById('mapContainer');
+const mapFrame       = document.getElementById('mapFrame');
+const mapDirectLink  = document.getElementById('mapDirectLink');
+const panelMessages  = document.getElementById('panelMessages');
+const panelInput     = document.getElementById('panelInput');
+const panelSendBtn   = document.getElementById('panelSendBtn');
+const panelMicBtn    = document.getElementById('panelMicBtn');
+const mainScroll     = document.getElementById('mainScroll');
+const evmModal       = document.getElementById('evmModal');
+const accModal       = document.getElementById('accModal');
+const evmFeedback    = document.getElementById('evmFeedback');
+const evmScreen      = document.getElementById('evmScreen');
 
-let isAudioEnabled = false;
-let currentLanguage = 'en-IN';
-let currentStage = 1;
+// Sidebar voter info
+const sidebarVoterCard = document.getElementById('sidebarVoterCard');
+const sidebarName      = document.getElementById('sidebarName');
+const sidebarEpic      = document.getElementById('sidebarEpic');
+const sidebarBooth     = document.getElementById('sidebarBooth');
+const sidebarSerial    = document.getElementById('sidebarSerial');
 
-const progressTracker = document.getElementById('progressTracker');
-const progressText = document.getElementById('progressText');
-const progressBar = document.getElementById('progressBar');
-
-function updateStage(stage) {
-    currentStage = stage;
-    progressTracker.classList.remove('hidden');
-    const stages = {
-        1: { text: "Stage 1: Getting Started", width: "15%" },
-        2: { text: "Stage 2: Checking Eligibility", width: "30%" },
-        3: { text: "Stage 3: Finding Details", width: "50%" },
-        4: { text: "Stage 4: Locating Booth", width: "70%" },
-        5: { text: "Stage 5: At Polling Station", width: "90%" },
-        6: { text: "Stage 6: Vote Completed", width: "100%" }
-    };
-    const s = stages[stage] || stages[1];
-    progressText.innerText = s.text;
-    progressBar.style.width = s.width;
-}
-
-// --- Audio Management ---
-audioToggle.addEventListener('click', () => {
-    isAudioEnabled = !isAudioEnabled;
-    audioToggle.classList.toggle('active', isAudioEnabled);
-    audioToggle.innerText = isAudioEnabled ? '🔊' : '🔈';
-    if (!isAudioEnabled) window.speechSynthesis.cancel();
-});
-
-function speakText(text, lang = currentLanguage) {
-    if (!isAudioEnabled) return;
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // Stop current
-        const cleanText = text.replace(/[*#]/g, '').replace(/<[^>]*>?/gm, '');
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = lang;
-        utterance.rate = 0.85;
-        window.speechSynthesis.speak(utterance);
+// ── TRANSLATIONS ──────────────────────────────────────────────────────────────
+const i18n = {
+    'en-IN': {
+        greeting: 'Namaste! Ready to cast your vote? 🙏',
+        title: 'VoteSeva AI',
+        card1: 'Find My Booth', card1s: 'EPIC ID or name search',
+        card2: 'No Voter ID?', card2s: '12 valid alternatives',
+        card3: 'EVM Practice', card3s: 'Try the simulator',
+        card4: 'At the Booth', card4s: 'Step-by-step guide',
+        placeholder: 'Ask anything about voting...',
+        stepTitles: ['What to do now', 'What happens next', 'What to say', 'Important note'],
+        stepPrefixes: ['Step 1:', 'Step 2:', 'Step 3:', 'Step 4:']
+    },
+    'hi-IN': {
+        greeting: 'नमस्ते! वोट देने के लिए तैयार हैं? 🙏',
+        title: 'वोटसेवा AI',
+        card1: 'मेरा बूथ खोजें', card1s: 'EPIC ID या नाम खोज',
+        card2: 'वोटर ID नहीं है?', card2s: '12 वैध विकल्प',
+        card3: 'EVM अभ्यास', card3s: 'सिम्युलेटर आज़माएं',
+        card4: 'बूथ पर हूँ', card4s: 'चरण-दर-चरण मार्गदर्शन',
+        placeholder: 'मतदान के बारे में कुछ भी पूछें...',
+        stepTitles: ['अभी क्या करें', 'आगे क्या होगा', 'क्या कहें', 'महत्वपूर्ण टिप्पणी'],
+        stepPrefixes: ['चरण 1:', 'चरण 2:', 'चरण 3:', 'चरण 4:']
+    },
+    'te-IN': {
+        greeting: 'నమస్కారం! ఓటు వేయడానికి సిద్ధంగా ఉన్నారా? 🙏',
+        title: 'ఓట్‌సేవ AI',
+        card1: 'నా బూత్ కనుగొను', card1s: 'EPIC ID లేదా పేరు శోధన',
+        card2: 'ఓటర్ ID లేదా?', card2s: '12 చెల్లుబాటు ప్రత్యామ్నాయాలు',
+        card3: 'EVM అభ్యాసం', card3s: 'సిమ్యులేటర్ ప్రయత్నించండి',
+        card4: 'బూత్ వద్ద ఉన్నాను', card4s: 'దశల వారీ మార్గదర్శకత్వం',
+        placeholder: 'ఓటింగ్ గురించి ఏదైనా అడగండి...',
+        stepTitles: ['ఇప్పుడు ఏమి చేయాలి', 'తర్వాత ఏమి జరుగుతుంది', 'ఏమి చెప్పాలి', 'ముఖ్యమైన గమనిక'],
+        stepPrefixes: ['దశ 1:', 'దశ 2:', 'దశ 3:', 'దశ 4:']
+    },
+    'ta-IN': {
+        greeting: 'வணக்கம்! வாக்களிக்க தயாரா? 🙏',
+        title: 'வோட்சேவா AI',
+        card1: 'என் சாவடி கண்டுபிடி', card1s: 'EPIC ID அல்லது பெயர் தேடல்',
+        card2: 'வாக்காளர் ID இல்லையா?', card2s: '12 செல்லுபடியாகும் மாற்றுகள்',
+        card3: 'EVM பயிற்சி', card3s: 'சிமுலேட்டரை முயற்சிக்கவும்',
+        card4: 'சாவடியில் இருக்கிறேன்', card4s: 'படி படியாக வழிகாட்டல்',
+        placeholder: 'வாக்களிப்பு பற்றி எதையும் கேளுங்கள்...',
+        stepTitles: ['இப்போது என்ன செய்வது', 'அடுத்து என்ன நடக்கும்', 'என்ன சொல்வது', 'முக்கிய குறிப்பு'],
+        stepPrefixes: ['படி 1:', 'படி 2:', 'படி 3:', 'படி 4:']
+    },
+    'kn-IN': {
+        greeting: 'ನಮಸ್ಕಾರ! ಮತ ಚಲಾಯಿಸಲು ಸಿದ್ಧರಾಗಿದ್ದೀರಾ? 🙏',
+        title: 'ವೋಟ್‌ಸೇವಾ AI',
+        card1: 'ನನ್ನ ಬೂತ್ ಹುಡುಕಿ', card1s: 'EPIC ID ಅಥವಾ ಹೆಸರು ಹುಡುಕಾಟ',
+        card2: 'ಮತದಾರ ID ಇಲ್ಲವೇ?', card2s: '12 ಮಾನ್ಯ ಪರ್ಯಾಯಗಳು',
+        card3: 'EVM ಅಭ್ಯಾಸ', card3s: 'ಸಿಮ್ಯುಲೇಟರ್ ಪ್ರಯತ್ನಿಸಿ',
+        card4: 'ಬೂತ್‌ನಲ್ಲಿದ್ದೇನೆ', card4s: 'ಹಂತ-ಹಂತ ಮಾರ್ಗದರ್ಶನ',
+        placeholder: 'ಮತದಾನದ ಬಗ್ಗೆ ಏನಾದರೂ ಕೇಳಿ...',
+        stepTitles: ['ಈಗ ಏನು ಮಾಡಬೇಕು', 'ಮುಂದೆ ಏನಾಗುತ್ತದೆ', 'ಏನು ಹೇಳಬೇಕು', 'ಪ್ರಮುಖ ಟಿಪ್ಪಣಿ'],
+        stepPrefixes: ['ಹಂತ 1:', 'ಹಂತ 2:', 'ಹಂತ 3:', 'ಹಂತ 4:']
+    },
+    'mr-IN': {
+        greeting: 'नमस्कार! मतदानासाठी तयार आहात का? 🙏',
+        title: 'वोटसेवा AI',
+        card1: 'माझे बूथ शोधा', card1s: 'EPIC ID किंवा नाव शोध',
+        card2: 'मतदार ID नाही?', card2s: '12 वैध पर्याय',
+        card3: 'EVM सराव', card3s: 'सिम्युलेटर वापरून पहा',
+        card4: 'बूथवर आहे', card4s: 'चरण-दर-चरण मार्गदर्शन',
+        placeholder: 'मतदानाबद्दल काहीही विचारा...',
+        stepTitles: ['आता काय करावे', 'पुढे काय होईल', 'काय बोलावे', 'महत्त्वाची नोंद'],
+        stepPrefixes: ['पायरी 1:', 'पायरी 2:', 'पायरी 3:', 'पायरी 4:']
     }
-}
+};
 
-// --- Language Management ---
-languageSelect.addEventListener('change', (e) => {
-    currentLanguage = e.target.value;
-    updateUILanguage();
-});
+// ── LANGUAGE MANAGEMENT ───────────────────────────────────────────────────────
+function applyLanguage(lang) {
+    currentLanguage = lang;
+    localStorage.setItem('vsLang', lang);
+    const t = i18n[lang] || i18n['en-IN'];
 
-function updateUILanguage() {
-    const texts = {
-        'en-IN': { hero: 'VoteSeva', subtitle: "India's Smart Election Assistant", cards: ['Find My Booth', 'No Voter ID?', 'At the Booth', 'Practice Vote'] },
-        'hi-IN': { hero: 'वोटसेवा', subtitle: "भारत का स्मार्ट चुनाव सहायक", cards: ['मेरा बूथ खोजें', 'वोटर आईडी नहीं है?', 'बूथ पर हूँ', 'वोट का अभ्यास'] },
-        'te-IN': { hero: 'ఓట్‌సేవ', subtitle: "భారతదేశపు స్మార్ట్ ఎన్నికల సహాయకుడు", cards: ['నా బూత్ కనుగొను', 'ఓటర్ ఐడి లేదా?', 'బూత్ వద్ద ఉన్నాను', 'ఓటు సాధన'] },
-        'ta-IN': { hero: 'வோட்சேवा', subtitle: "இந்தியாவின் ஸ்மார்ட் தேர்தல் உதவியாளர்", cards: ['எனது சாவடியைக் கண்டுபிடி', 'வாக்காளர் அடையாள அட்டை இல்லையா?', 'சாவடியில் இருக்கிறேன்', 'வாக்கு பயிற்சி'] },
-        'mr-IN': { hero: 'वोटसेवा', subtitle: "भारताचे स्मार्ट निवडणूक साहाय्यक", cards: ['माझे मतदान केंद्र शोधा', 'मतदार ओळखपत्र नाही?', 'मी मतदान केंद्रावर आहे', 'मतदान सराव'] }
-    };
-    const t = texts[currentLanguage] || texts['en-IN'];
-    document.querySelector('.landing-hero h1').innerText = t.hero;
-    document.querySelector('.landing-hero p').innerText = t.subtitle;
-    
-    // Translate Cards
-    const cardTitles = document.querySelectorAll('.action-card h3');
-    t.cards.forEach((txt, i) => {
-        if (cardTitles[i]) cardTitles[i].innerText = txt;
+    document.getElementById('heroGreeting').textContent  = t.greeting;
+    document.getElementById('heroTitle').textContent     = t.title;
+    document.getElementById('card1Label').textContent    = t.card1;
+    document.getElementById('card1Sub').textContent      = t.card1s;
+    document.getElementById('card2Label').textContent    = t.card2;
+    document.getElementById('card2Sub').textContent      = t.card2s;
+    document.getElementById('card3Label').textContent    = t.card3;
+    document.getElementById('card3Sub').textContent      = t.card3s;
+    document.getElementById('card4Label').textContent    = t.card4;
+    document.getElementById('card4Sub').textContent      = t.card4s;
+    chatInput.placeholder   = t.placeholder;
+    if (panelInput) panelInput.placeholder = t.placeholder;
+
+    // Sync nav select
+    const navSel = document.getElementById('langSelectNav');
+    if (navSel) navSel.value = lang;
+
+    // Update pills
+    document.querySelectorAll('.lang-pill').forEach(p => {
+        const active = p.dataset.lang === lang;
+        p.classList.toggle('active', active);
+        p.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
 }
 
-// --- Format Output ---
-function formatResponse(text) {
-    // 1. Remove markdown bolding ** 
-    let clean = text.replace(/\*\*(.*?)\*\*/g, '$1');
-    clean = clean.replace(/\*(.*?)\*/g, '$1');
+// Language pills
+document.querySelectorAll('.lang-pill').forEach(pill => {
+    pill.addEventListener('click', () => applyLanguage(pill.dataset.lang));
+});
 
-    const stepTitles = {
-        'en-IN': ['Step 1: What to do now', 'Step 2: What happens next', 'Step 3: What to say', 'Step 4: Important note'],
-        'hi-IN': ['चरण 1: अब क्या करें', 'चरण 2: आगे क्या होगा', 'चरण 3: क्या कहें', 'चरण 4: महत्वपूर्ण नोट'],
-        'te-IN': ['దశ 1: ఇప్పుడు ఏమి చేయాలి', 'దశ 2: తరువాత ఏమి జరుగుతుంది', 'దశ 3: ఏమి చెప్పాలి', 'దశ 4: ముఖ్యమైన గమనిక'],
-        'ta-IN': ['படி 1: இப்போது என்ன செய்வது', 'படி 2: அடுத்து என்ன நடக்கும்', 'படி 3: என்ன சொல்வது', 'படி 4: முக்கிய குறிப்பு'],
-        'kn-IN': ['ಹಂತ 1: ಈಗ ಏನು ಮಾಡಬೇಕು', 'ಹಂತ 2: ಮುಂದೆ ಏನಾಗುತ್ತದೆ', 'ಹಂತ 3: ಏನು ಹೇಳಬೇಕು', 'ಹಂತ 4: ಪ್ರಮುಖ ಟಿಪ್ಪಣಿ'],
-        'mr-IN': ['पायरी 1: आता काय करावे', 'पायरी 2: पुढे काय होईल', 'पायरी 3: काय बोलावे', 'पायरी 4: महत्वाची टीप']
-    };
+// Nav select
+const langSelectNav = document.getElementById('langSelectNav');
+if (langSelectNav) {
+    langSelectNav.addEventListener('change', e => applyLanguage(e.target.value));
+}
 
-    const currentTitles = stepTitles[currentLanguage] || stepTitles['en-IN'];
-    
-    // Convert URLs to clickable links
-    const formattedText = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:var(--primary-blue); font-weight:600;">$1</a>');
-    
-    const steps = formattedText.split(/Step \d+:|चरण \d+:|దశ \d+:|படி \d+:|ಹಂತ \d+:|ಪಾಯರಿ \d+:/i).filter(s => s.trim());
-    
-    if (steps.length >= 2) {
-        return `<div class="step-container">` + 
-            steps.map((s, i) => `
-                <div class="step-item">
-                    <b>${currentTitles[i] || 'Step ' + (i+1)}</b>
-                    ${s.trim()}
-                </div>
-            `).join('') + `</div>`;
-    } else {
-        return formattedText.replace(/\n/g, '<br>');
+// ── AUDIO / TTS ───────────────────────────────────────────────────────────────
+function speakText(text) {
+    if (!isAudioEnabled) return;
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const clean = text.replace(/\*\*?(.*?)\*\*?/g, '$1').replace(/[#*_~`]/g, '').replace(/<[^>]*>/g, '');
+    const utt = new SpeechSynthesisUtterance(clean);
+    utt.lang = currentLanguage;
+    utt.rate = 0.88;
+    window.speechSynthesis.speak(utt);
+}
+
+function syncAudioUI() {
+    const btn = document.getElementById('audioBtn');
+    btn.textContent = isAudioEnabled ? '🔊' : '🔈';
+    btn.setAttribute('aria-pressed', isAudioEnabled ? 'true' : 'false');
+    btn.classList.toggle('active', isAudioEnabled);
+
+    const panelBtn = document.getElementById('ttsPanelBtn');
+    if (panelBtn) {
+        panelBtn.textContent = isAudioEnabled ? '🔊 On' : '🔊 Off';
+        panelBtn.setAttribute('aria-pressed', isAudioEnabled ? 'true' : 'false');
+    }
+    const accToggle = document.getElementById('audioToggleAcc');
+    if (accToggle) {
+        accToggle.classList.toggle('on', isAudioEnabled);
+        accToggle.setAttribute('aria-checked', isAudioEnabled ? 'true' : 'false');
     }
 }
 
-// --- Chat Logic ---
+document.getElementById('audioBtn').addEventListener('click', () => {
+    isAudioEnabled = !isAudioEnabled;
+    localStorage.setItem('vsAudio', isAudioEnabled);
+    if (!isAudioEnabled) window.speechSynthesis?.cancel();
+    syncAudioUI();
+});
+
+document.getElementById('ttsPanelBtn')?.addEventListener('click', () => {
+    isAudioEnabled = !isAudioEnabled;
+    localStorage.setItem('vsAudio', isAudioEnabled);
+    syncAudioUI();
+});
+
+// ── JOURNEY TRACKER ──────────────────────────────────────────────────────────
+function setJourneyStep(step) {
+    currentJourneyStep = step;
+    const steps = ['jStep2', 'jStep3', 'jStep4'];
+    const lines  = ['jLine2', 'jLine3'];
+    steps.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.toggle('active', i + 2 === step);
+        el.classList.toggle('done',   i + 2 < step);
+        el.setAttribute('aria-label', el.getAttribute('aria-label')?.replace(/: .+$/, '') + (i + 2 < step ? ': completed' : i + 2 === step ? ': current step' : ': upcoming'));
+    });
+    lines.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('done', i + 2 < step);
+    });
+
+    const stageMap = {
+        2: 'Finding Your Booth…',
+        3: 'At the Polling Station',
+        4: '✅ Vote Cast!'
+    };
+    const badge = document.getElementById('stageBadgeText');
+    if (badge && stageMap[step]) badge.textContent = stageMap[step];
+}
+
+// ── SIDEBAR VOTER CARD ────────────────────────────────────────────────────────
+function showSidebarVoter(voter) {
+    if (!voter || !sidebarVoterCard) return;
+    sidebarName.textContent   = voter.name || '—';
+    sidebarEpic.textContent   = 'EPIC: ' + (voter.epicNumber || '—');
+    sidebarBooth.textContent  = '📍 ' + (voter.boothName || '—');
+    sidebarSerial.textContent = '#' + (voter.serialNumber || '—');
+    sidebarVoterCard.style.display = 'block';
+}
+
+// ── CHAT RENDERING ────────────────────────────────────────────────────────────
+/**
+ * Formats AI response text into accessible numbered step cards.
+ * @param {string} text - Raw response text from Gemini/backend
+ * @returns {string} HTML string
+ */
+function formatResponse(text) {
+    const t = i18n[currentLanguage] || i18n['en-IN'];
+
+    // Sanitise markdown-style asterisks and convert URLs to links
+    let clean = text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:var(--navy);font-weight:600;">$1</a>');
+
+    // Split on step markers (multilingual)
+    const stepRx = /Step \d+:|چرண \d+:|चरण \d+:|దశ \d+:|படி \d+:|ಹಂತ \d+:|পায়রি \d+:/gi;
+    const parts = clean.split(stepRx).filter(s => s.trim());
+
+    if (parts.length >= 2) {
+        const steps = parts.map((s, i) => `
+          <div class="step-item">
+            <div class="step-num" aria-hidden="true">${i + 1}</div>
+            <div>
+              <div class="step-title">${t.stepTitles[i] || 'Step ' + (i + 1)}</div>
+              <div class="step-text">${s.trim()}</div>
+            </div>
+          </div>`).join('');
+        return `<div class="step-container">${steps}</div>`;
+    }
+
+    return `<div class="step-text">${clean.replace(/\n/g, '<br>')}</div>`;
+}
+
+/**
+ * Appends a message bubble to both the main and desktop panel chat areas.
+ * @param {string} text - Message text
+ * @param {'user'|'bot'} sender
+ */
 function addMessage(text, sender) {
-    if (!landingState.classList.contains('hidden')) {
-        landingState.classList.add('hidden');
-        chatArea.classList.remove('hidden');
+    // Show chat, hide landing
+    if (!landingPanel.classList.contains('hidden')) {
+        landingPanel.classList.add('hidden');
+        chatPanel.classList.remove('hidden');
         backBtn.classList.remove('hidden');
     }
 
-    const msgDiv = document.createElement('div');
-    msgDiv.classList.add('message', sender);
-    
+    // ── Main (mobile/centre) panel ──
+    const wrapper = document.createElement('div');
+    wrapper.className = `message-wrapper ${sender}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = `message ${sender}`;
+
     if (sender === 'bot') {
-        const formatted = formatResponse(text);
-        msgDiv.innerHTML = formatted;
-        
-        // Add individual listen button
+        bubble.innerHTML = formatResponse(text);
         const listenBtn = document.createElement('button');
         listenBtn.className = 'listen-btn';
         listenBtn.innerHTML = '🔊';
+        listenBtn.setAttribute('aria-label', 'Read this message aloud');
         listenBtn.onclick = () => speakText(text);
-        msgDiv.appendChild(listenBtn);
-
+        wrapper.appendChild(bubble);
+        wrapper.appendChild(listenBtn);
         speakText(text);
     } else {
-        msgDiv.innerText = text;
-    }
-    
-    chatMessages.appendChild(msgDiv);
-    
-    // Add Share Location button if AI asks for it
-    if (sender === 'bot' && (text.toLowerCase().includes('location') || text.toLowerCase().includes('area'))) {
-        const locBtn = document.createElement('button');
-        locBtn.className = 'quick-btn';
-        locBtn.style.marginTop = '10px';
-        locBtn.innerHTML = '📍 Share My Location';
-        locBtn.onclick = () => getGeoLocation();
-        chatMessages.appendChild(locBtn);
+        bubble.textContent = text;
+        wrapper.appendChild(bubble);
     }
 
-    mainView.scrollTop = mainView.scrollHeight;
+    chatPanel.appendChild(wrapper);
+    mainScroll.scrollTop = mainScroll.scrollHeight;
+
+    // ── Desktop right panel ──
+    if (panelMessages) {
+        const pw = document.createElement('div');
+        pw.className = `message-wrapper ${sender}`;
+        const pb = document.createElement('div');
+        pb.className = `message ${sender}`;
+        pb.innerHTML = sender === 'bot' ? formatResponse(text) : '';
+        if (sender === 'user') pb.textContent = text;
+        pw.appendChild(pb);
+        panelMessages.appendChild(pw);
+        panelMessages.scrollTop = panelMessages.scrollHeight;
+    }
+
+    // Share location offer
+    if (sender === 'bot' && /\b(location|area|where)\b/i.test(text)) {
+        const locBtn = document.createElement('button');
+        locBtn.className = 'chip';
+        locBtn.textContent = '📍 Share My Location';
+        locBtn.style.marginTop = '6px';
+        locBtn.onclick = getGeoLocation;
+        chatPanel.appendChild(locBtn);
+    }
 }
 
-// Global Clipboard Helper
-window.copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-        alert("Address copied to clipboard!");
-    });
-};
+function addLoadingBubble() {
+    const wrap = document.createElement('div');
+    wrap.className = 'message-wrapper bot';
+    wrap.id = 'loadingBubble';
+    const bubble = document.createElement('div');
+    bubble.className = 'message bot';
+    bubble.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+    wrap.appendChild(bubble);
+    chatPanel.appendChild(wrap);
+    mainScroll.scrollTop = mainScroll.scrollHeight;
+}
 
-// Global action helper for chips
-window.sendAction = (action) => {
-    if (action === "Help, I am lost!") {
-        sendMessage("SOS - I am lost and need help finding my booth!");
-    } else {
-        sendMessage(action);
-    }
-};
+function removeLoadingBubble() {
+    document.getElementById('loadingBubble')?.remove();
+}
 
+// ── MAP DISPLAY ───────────────────────────────────────────────────────────────
+function showMap(url) {
+    if (!url) return;
+    const embedUrl = url.includes('output=embed') ? url : url + '&output=embed';
+    mapFrame.src = embedUrl;
+    mapDirectLink.href = url.replace('&output=embed', '');
+    mapContainer.classList.remove('hidden');
+    mapContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function hideMap() {
+    mapContainer.classList.add('hidden');
+    mapFrame.src = '';
+}
+
+// ── GEOLOCATION ───────────────────────────────────────────────────────────────
 function getGeoLocation() {
     if (!navigator.geolocation) {
-        addMessage("Geolocation is not supported by your browser.", 'bot');
+        addMessage('Geolocation is not supported by your browser.', 'bot');
         return;
     }
-    
-    addMessage("Searching for your coordinates...", 'bot');
-    navigator.geolocation.getCurrentPosition(async (position) => {
-        const { latitude, longitude } = position.coords;
-        sendMessage(`My coordinates are ${latitude}, ${longitude}. Please find the nearest booth.`);
-    }, () => {
-        addMessage("Please enable location access in your browser settings.", 'bot');
-    });
+    addMessage('📍 Detecting your location…', 'bot');
+    navigator.geolocation.getCurrentPosition(
+        pos => sendMessage(`My coordinates are ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}. Find the nearest polling booth.`),
+        ()  => addMessage('Please enable location access in your browser settings.', 'bot')
+    );
 }
 
+// ── LOCAL DECISION ENGINE ─────────────────────────────────────────────────────
+/**
+ * Handles simple queries locally to reduce API latency.
+ * @param {string} text
+ * @returns {string|null} local reply, or null to let backend handle it
+ */
+function localDecisionEngine(text) {
+    const lower = text.toLowerCase();
+    if (/\bpractice\b/.test(lower) && /\bvot(e|ing)\b/.test(lower)) {
+        openEvmModal();
+        return "Opening the EVM Practice Simulator for you! Press the blue VOTE button to try casting a vote.";
+    }
+    return null;
+}
+
+// ── SEND MESSAGE ──────────────────────────────────────────────────────────────
+/** @param {string|null} textOverride */
 async function sendMessage(textOverride = null) {
-    const text = textOverride || userInput.value.trim();
+    const text = textOverride || chatInput.value.trim();
     if (!text) return;
+    chatInput.value = '';
 
-    addMessage(text, 'user');
-    userInput.value = '';
-
-    // 1. Try Local Decision Engine first
-    const localDecision = decisionEngine(text);
-    if (localDecision) {
-        setTimeout(() => {
-            const reply = typeof localDecision === 'string' ? localDecision : localDecision.reply;
-            addMessage(reply, 'bot');
-            if (localDecision.map) {
-                document.getElementById('mapContainer').classList.remove('hidden');
-                document.getElementById('mapFrame').src = `https://www.google.com/maps?q=${localDecision.map.lat},${localDecision.map.lng}&output=embed`;
-            }
-        }, 500);
-        return;
+    if (!landingPanel.classList.contains('hidden')) {
+        landingPanel.classList.add('hidden');
+        chatPanel.classList.remove('hidden');
+        backBtn.classList.remove('hidden');
     }
 
-    // 2. Fallback to Gemini Backend
-    try {
-        const loadingMsg = document.createElement('div');
-        loadingMsg.className = 'message bot loading-status';
-        loadingMsg.innerHTML = '<i>🔍 Searching ECI Database...</i>';
-        chatMessages.appendChild(loadingMsg);
+    addMessage(text, 'user');
 
-        const response = await fetch('/api/chat', {
+    // Try local engine first
+    const local = localDecisionEngine(text);
+    if (local) { setTimeout(() => addMessage(local, 'bot'), 350); return; }
+
+    // Remote API
+    addLoadingBubble();
+    try {
+        const res = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sessionId,
-                query: text,
-                language: currentLanguage,
-                contextType: 'general'
-            })
+            body: JSON.stringify({ sessionId, query: text, language: currentLanguage, contextType: 'general' })
         });
 
-        chatMessages.removeChild(loadingMsg);
-        const data = await response.json();
-        
-        // Handle Map rendering for Directions/SOS
+        removeLoadingBubble();
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
         if (data.mapLink) {
-            document.getElementById('mapContainer').classList.remove('hidden');
-            document.getElementById('mapFrame').src = data.mapLink.includes('output=embed') ? data.mapLink : `${data.mapLink}&output=embed`;
+            showMap(data.mapLink);
         } else if (data.type !== 'booth_info') {
-            document.getElementById('mapContainer').classList.add('hidden');
+            hideMap();
         }
 
         if (data.reply) addMessage(data.reply, 'bot');
-        if (data.stage) updateStage(data.stage);
-    } catch (error) {
-        addMessage("Sorry, I cannot connect. Please check your internet.", 'bot');
+
+        // Extract voter info from response if found
+        const boothMatch = data.reply?.match(/Booth:\s*([^,\n]+)/);
+        const serialMatch = data.reply?.match(/Serial(?:\s+No)?:\s*(\w+)/);
+        const epicMatch = data.reply?.match(/EPIC:\s*(\w+)/);
+        if (boothMatch) {
+            showSidebarVoter({ name: text, boothName: boothMatch[1].trim(), serialNumber: serialMatch?.[1], epicNumber: epicMatch?.[1] });
+            setJourneyStep(3);
+        }
+
+        if (data.stage) setJourneyStep(Math.min(4, data.stage));
+
+    } catch (err) {
+        removeLoadingBubble();
+        console.error('sendMessage error:', err);
+        addMessage('Sorry, I cannot connect right now. Please check your internet and try again.', 'bot');
     }
 }
 
-// --- Voice Input ---
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (SpeechRecognition) {
-    const recognition = new SpeechRecognition();
-    recognition.lang = currentLanguage;
-    
-    recognition.onresult = (e) => {
-        userInput.value = e.results[0][0].transcript;
-        sendMessage();
-    };
+// Global helper used by quick-action chips
+window.sendAction = text => {
+    chatInput.value = '';
+    sendMessage(text);
+};
 
-    micBtn.onclick = () => {
-        recognition.lang = currentLanguage;
-        recognition.start();
-        micBtn.classList.add('recording');
-    };
-    recognition.onend = () => micBtn.classList.remove('recording');
-}
-
-// --- Listeners ---
+// ── KEYBOARD & BUTTON HANDLERS ────────────────────────────────────────────────
 sendBtn.addEventListener('click', () => sendMessage());
-userInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        sendMessage();
-    }
-});
-backBtn.onclick = () => {
-    landingState.classList.remove('hidden');
-    chatArea.classList.add('hidden');
+chatInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+
+if (panelSendBtn) panelSendBtn.addEventListener('click', () => { sendMessage(panelInput.value.trim()); panelInput.value = ''; });
+if (panelInput) panelInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(panelInput.value.trim()); panelInput.value = ''; } });
+
+backBtn.addEventListener('click', () => {
+    landingPanel.classList.remove('hidden');
+    chatPanel.classList.add('hidden');
     backBtn.classList.add('hidden');
-    progressTracker.classList.add('hidden');
-    document.getElementById('mapContainer').classList.add('hidden');
-};
+    hideMap();
+    setJourneyStep(2);
+});
 
-document.querySelectorAll('.action-card').forEach(card => {
-    card.onclick = () => {
-        // Clear previous conversation for a fresh start
-        chatMessages.innerHTML = '';
-        document.getElementById('mapContainer').classList.add('hidden');
-        
+// Sidebar nav items
+document.querySelectorAll('.sidebar-nav-item[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.sidebar-nav-item').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+        btn.classList.add('active');
+        btn.setAttribute('aria-current', 'page');
+        const action = btn.dataset.action;
+        if (action === 'home') { landingPanel.classList.remove('hidden'); chatPanel.classList.add('hidden'); backBtn.classList.add('hidden'); hideMap(); return; }
+        if (action === 'practice') { openEvmModal(); return; }
+        if (action === 'sos') { sendMessage('SOS I am lost'); return; }
+        sendMessage(action === 'find_booth' ? 'I want to find my polling booth' : action === 'no_voter_id' ? 'I do not have a voter ID' : action === 'at_station' ? 'I am at the polling booth' : action);
+    });
+});
+
+// Action cards on landing
+document.querySelectorAll('.action-card[data-action]').forEach(card => {
+    card.addEventListener('click', () => {
+        chatPanel.innerHTML = '';
+        hideMap();
         const action = card.dataset.action;
-        if (action === 'find_booth') {
-            updateStage(3);
-            sendMessage("I want to find my polling booth.");
-        } else if (action === 'no_voter_id') {
-            updateStage(2);
-            sendMessage("I don't have a voter ID. Can I still vote?");
-        } else if (action === 'at_station') {
-            updateStage(5);
-            sendMessage("I am at the polling booth. What should I do?");
-        }
-    };
+        const msgs = { find_booth: 'I want to find my polling booth.', no_voter_id: "I don't have a voter ID. Can I still vote?", at_station: 'I am at the polling booth. What should I do?' };
+        sendMessage(msgs[action] || action);
+    });
+    // Keyboard accessibility
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); } });
 });
 
-// EVM Simulator
-const practiceBtn = document.getElementById('practiceBtn');
-const evmModal = document.getElementById('evmModal');
-const closeEvm = document.getElementById('closeEvm');
-const evmBtns = document.querySelectorAll('.evm-btn');
+document.getElementById('practiceCardBtn')?.addEventListener('click', openEvmModal);
 
-practiceBtn.onclick = () => evmModal.classList.remove('hidden');
-closeEvm.onclick = () => evmModal.classList.add('hidden');
-evmBtns.forEach(btn => {
-    btn.onclick = () => {
-        document.getElementById('evmFeedback').classList.remove('hidden');
-        new Audio("https://www.soundjay.com/buttons/beep-01a.mp3").play().catch(()=>{});
+// ── VOICE INPUT ───────────────────────────────────────────────────────────────
+function setupVoice(inputEl, triggerBtn) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { triggerBtn.title = 'Voice not supported in this browser'; return; }
+    const rec = new SR();
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.onresult = e => {
+        inputEl.value = e.results[0][0].transcript;
+        inputEl.focus();
+    };
+    rec.onend = () => { triggerBtn.classList.remove('recording'); triggerBtn.setAttribute('aria-pressed', 'false'); };
+    rec.onerror = () => { triggerBtn.classList.remove('recording'); };
+    triggerBtn.addEventListener('click', () => {
+        rec.lang = currentLanguage;
+        rec.start();
+        triggerBtn.classList.add('recording');
+        triggerBtn.setAttribute('aria-pressed', 'true');
+    });
+}
+setupVoice(chatInput, micBtn);
+if (panelInput && panelMicBtn) setupVoice(panelInput, panelMicBtn);
+
+// ── EVM SIMULATOR ─────────────────────────────────────────────────────────────
+function openEvmModal() { evmModal.classList.remove('hidden'); document.getElementById('closeEvm').focus(); }
+
+document.getElementById('closeEvm').addEventListener('click', () => evmModal.classList.add('hidden'));
+evmModal.addEventListener('click', e => { if (e.target === evmModal) evmModal.classList.add('hidden'); });
+
+document.querySelectorAll('.evm-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        evmScreen.textContent = 'RECORDING VOTE…';
+        btn.disabled = true;
+        document.querySelectorAll('.evm-btn').forEach(b => b.disabled = true);
         setTimeout(() => {
-            evmFeedback.classList.add('hidden');
-            evmModal.classList.add('hidden');
-            updateStage(6);
-            addMessage("Practice complete! You now know how to use the EVM. Great job!", 'bot');
-        }, 2000);
-    };
+            evmFeedback.classList.remove('hidden');
+            evmScreen.textContent = 'VOTE CAST — THANK YOU';
+            try { new Audio('beep.mp3').play(); } catch (_) {}
+            setTimeout(() => {
+                evmModal.classList.add('hidden');
+                evmFeedback.classList.add('hidden');
+                evmScreen.textContent = 'BALLOT UNIT — PRESS BLUE BUTTON';
+                document.querySelectorAll('.evm-btn').forEach(b => b.disabled = false);
+                setJourneyStep(4);
+                addMessage('🎉 Practice complete! You now know exactly how to use the EVM. You\'re all set to vote!', 'bot');
+            }, 2200);
+        }, 1000);
+    });
 });
 
-// Accessibility Panel Logic
-const accessibilityBtn = document.getElementById('accessibilityBtn');
-const accessibilityPanel = document.getElementById('accessibilityPanel');
-const closeAcc = document.getElementById('closeAcc');
+// ── ACCESSIBILITY PANEL ───────────────────────────────────────────────────────
+document.getElementById('accBtn').addEventListener('click', () => { accModal.classList.remove('hidden'); document.getElementById('closeAcc').focus(); });
+document.getElementById('closeAcc').addEventListener('click', () => accModal.classList.add('hidden'));
+accModal.addEventListener('click', e => { if (e.target === accModal) accModal.classList.add('hidden'); });
 
-accessibilityBtn.onclick = () => accessibilityPanel.classList.remove('hidden');
-closeAcc.onclick = () => accessibilityPanel.classList.add('hidden');
-
-document.getElementById('highContrastToggle').onclick = () => {
-    document.body.classList.toggle('high-contrast');
-    const isHC = document.body.classList.contains('high-contrast');
-    localStorage.setItem('highContrast', isHC);
-};
-
-document.getElementById('largeTextToggle').onclick = () => {
-    document.body.classList.toggle('large-text');
-};
-
-document.getElementById('dyslexicFontToggle').onclick = () => {
-    document.body.classList.toggle('dyslexic-mode');
-};
-
-// Google Auth Logic (100% Google Service Score)
-const googleLoginBtn = document.getElementById('googleLoginBtn');
-if (googleLoginBtn) {
-    googleLoginBtn.onclick = async () => {
-        try {
-            // Simulate Google OAuth2 Flow
-            const mockIdToken = "dummy_google_token";
-            const response = await fetch('/api/auth/verify-google-token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken: mockIdToken })
-            });
-            const data = await response.json();
-            if (data.success) {
-                isUserLoggedIn = true;
-                userProfile = data.user;
-                document.getElementById('loginSection').innerHTML = `
-                    <div class="flex items-center gap-2 bg-green-50 px-2 py-1 rounded-lg border border-green-200">
-                        <span class="text-[10px] font-bold text-green-700">VERIFIED: ${userProfile.name}</span>
-                    </div>
-                `;
-                addMessage(`Welcome, ${userProfile.name}! Your identity is verified.`, 'bot');
-            }
-        } catch (e) {
-            console.error("Auth failed", e);
-        }
-    };
+function makeToggle(btnId, bodyClass, storageKey) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    const saved = localStorage.getItem(storageKey) === 'true';
+    if (saved) { document.body.classList.add(bodyClass); btn.classList.add('on'); btn.setAttribute('aria-checked', 'true'); }
+    btn.addEventListener('click', () => {
+        const on = document.body.classList.toggle(bodyClass);
+        btn.classList.toggle('on', on);
+        btn.setAttribute('aria-checked', on ? 'true' : 'false');
+        localStorage.setItem(storageKey, on);
+    });
 }
 
-window.onload = () => {
-    if (localStorage.getItem('highContrast') === 'true') {
-        document.body.classList.add('high-contrast');
+makeToggle('hcToggle',   'high-contrast', 'vsHC');
+makeToggle('ltToggle',   'large-text',    'vsLT');
+makeToggle('dyToggle',   'dyslexic',      'vsDY');
+
+// Dark mode (also linked to theme button in nav)
+const darkToggleAcc = document.getElementById('darkToggleAcc');
+const themeBtn = document.getElementById('themeBtn');
+function syncDark(on) {
+    document.body.classList.toggle('dark-mode', on);
+    themeBtn.textContent = on ? '☀️' : '🌙';
+    themeBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if (darkToggleAcc) { darkToggleAcc.classList.toggle('on', on); darkToggleAcc.setAttribute('aria-checked', on ? 'true' : 'false'); }
+    localStorage.setItem('vsDark', on);
+}
+themeBtn.addEventListener('click', () => syncDark(!document.body.classList.contains('dark-mode')));
+if (darkToggleAcc) darkToggleAcc.addEventListener('click', () => syncDark(!document.body.classList.contains('dark-mode')));
+
+// Acc panel audio toggle
+document.getElementById('audioToggleAcc')?.addEventListener('click', function() {
+    isAudioEnabled = !isAudioEnabled;
+    localStorage.setItem('vsAudio', isAudioEnabled);
+    if (!isAudioEnabled) window.speechSynthesis?.cancel();
+    syncAudioUI();
+});
+
+// Trap focus in modals (WCAG 2.1 AA)
+function trapFocus(modal) {
+    const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    const first = focusable[0];
+    const last  = focusable[focusable.length - 1];
+    modal.addEventListener('keydown', e => {
+        if (e.key !== 'Tab') return;
+        if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last.focus(); } }
+        else { if (document.activeElement === last) { e.preventDefault(); first.focus(); } }
+    });
+    modal.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.add('hidden'); });
+}
+trapFocus(evmModal);
+trapFocus(accModal);
+
+// ── INITIALISE ────────────────────────────────────────────────────────────────
+(function init() {
+    applyLanguage(currentLanguage);
+    syncAudioUI();
+    if (localStorage.getItem('vsDark') === 'true') syncDark(true);
+    if (localStorage.getItem('vsHC') === 'true') { document.body.classList.add('high-contrast'); document.getElementById('hcToggle')?.classList.add('on'); }
+    if (localStorage.getItem('vsLT') === 'true') { document.body.classList.add('large-text'); document.getElementById('ltToggle')?.classList.add('on'); }
+    if (localStorage.getItem('vsDY') === 'true') { document.body.classList.add('dyslexic'); document.getElementById('dyToggle')?.classList.add('on'); }
+
+    // Welcome message in right panel
+    if (panelMessages) {
+        const w = document.createElement('div');
+        w.className = 'message-wrapper bot';
+        const b = document.createElement('div');
+        b.className = 'message bot';
+        b.innerHTML = '<div class="step-text">👋 <strong>Namaste!</strong> I\'m VoteSeva, your AI election guide. Ask me to find your booth, check your name in the voter list, or guide you through the voting process.</div>';
+        w.appendChild(b);
+        panelMessages.appendChild(w);
     }
-    updateUILanguage();
-};
+})();

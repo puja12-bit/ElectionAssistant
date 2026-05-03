@@ -1,472 +1,318 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoteSeva - India Election Assistant</title>
-    <style>
-        .skip-link {
-            position: absolute;
-            top: -40px;
-            left: 0;
-            background: #2563eb;
-            color: white;
-            padding: 8px;
-            z-index: 100;
-            transition: top 0.3s;
-        }
-        .skip-link:focus { top: 0; }
-
-        body.dark-mode {
-            background-color: #0f172a;
-            color: #f8fafc;
-        }
-        body.dark-mode header, body.dark-mode footer {
-            background-color: #1e293b;
-            border-color: #334155;
-            color: #f8fafc;
-        }
-        body.dark-mode h1 { color: #f8fafc; }
-        body.dark-mode .bg-white { background-color: #1e293b; }
-        body.dark-mode .text-gray-900 { color: #f8fafc; }
-        body.dark-mode .text-gray-800 { color: #e2e8f0; }
-        body.dark-mode .text-gray-600 { color: #94a3b8; }
-        body.dark-mode .border-gray-100 { border-color: #334155; }
-        body.dark-mode #chat-window { background-color: #1e293b; }
-    </style>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <style>
-        :root {
-            --primary-orange: #FF9933;
-            --primary-green: #138808;
-            --primary-blue: #000080;
-            --bg-light: #f8fafc;
-            --text-main: #1e293b;
-            --glass: rgba(255, 255, 255, 0.9);
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
-            min-height: 100vh;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .app-shell {
-            width: 100%;
-            max-width: 500px;
-            height: 90vh;
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border-radius: 30px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        /* Top Controls */
-        .top-bar {
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: white;
-            border-bottom: 1px solid #eee;
-        }
-
-        .lang-selector {
-            padding: 8px 12px;
-            border-radius: 12px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .audio-toggle {
-            background: #f0f4f8;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: 0.3s;
-        }
-
-        .audio-toggle.active {
-            background: var(--primary-blue);
-            color: white;
-        }
-
-        /* Main Content */
-        .main-view {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Landing State */
-        .landing-hero {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .landing-hero h1 {
-            font-size: 28px;
-            margin: 10px 0;
-            color: var(--primary-blue);
-        }
-
-        .action-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        .action-card {
-            background: white;
-            padding: 20px;
-            border-radius: 24px;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.3s;
-            border: 2px solid transparent;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
-        .action-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary-orange);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-
-        .card-icon {
-            font-size: 40px;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .action-card h3 {
-            margin: 0;
-            font-size: 16px;
-        }
-
-        /* Chat UI */
-        .message {
-            margin-bottom: 20px;
-            max-width: 85%;
-            padding: 15px 20px;
-            border-radius: 20px;
-            font-size: 16px;
-            line-height: 1.5;
-            position: relative;
-        }
-
-        .message.bot {
-            background: white;
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        .message.user {
-            background: var(--primary-blue);
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-
-        .step-container {
-            margin-top: 10px;
-        }
-
-        .step-item {
-            background: #f8fafc;
-            border-left: 4px solid var(--primary-orange);
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-        }
-
-        .step-item b {
-            display: block;
-            color: var(--primary-blue);
-            margin-bottom: 4px;
-        }
-
-        /* Listen Button */
-        .listen-btn {
-            position: absolute;
-            right: -40px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            opacity: 0.6;
-            transition: 0.3s;
-        }
-
-        .listen-btn:hover {
-            opacity: 1;
-            transform: translateY(-50%) scale(1.2);
-        }
-
-        /* Footer Input */
-        .input-bar {
-            padding: 15px 20px;
-            background: white;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-top: 1px solid #eee;
-            box-sizing: border-box;
-            position: relative;
-            z-index: 10;
-        }
-
-        .chat-input {
-            flex: 1;
-            padding: 12px 18px;
-            border-radius: 25px;
-            border: 1.5px solid #e2e8f0;
-            font-family: inherit;
-            font-size: 15px;
-            outline: none;
-            transition: 0.3s;
-            min-width: 0; /* Important for flex items */
-        }
-
-        .chat-input:focus {
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 3px rgba(0, 0, 128, 0.1);
-        }
-
-        .circle-btn {
-            width: 44px;
-            height: 44px;
-            min-width: 44px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: 0.3s;
-            flex-shrink: 0;
-        }
-
-        .mic-btn { background: #fee2e2; color: #ef4444; }
-        .mic-btn.recording { background: #ef4444; color: white; animation: pulse 1.5s infinite; }
-        .send-btn { background: var(--primary-blue); color: white; }
-
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-
-        .hidden { display: none !important; }
-
-        /* Modal */
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 30px;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .evm-btn {
-            width: 60px;
-            height: 40px;
-            background: #0066cc;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="VoteSeva — India's AI-powered election assistant. Find your polling booth, check voter roll, and get step-by-step guidance in 6 Indian languages.">
+  <title>VoteSeva — India Election Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Skip to Content for Accessibility -->
-    <a href="#mainView" class="skip-link">Skip to Content</a>
 
-    <div class="app-shell">
-        <header class="top-bar" role="banner">
-            <div class="flex items-center gap-2">
-                <select id="languageSelect" class="lang-selector" aria-label="Select Language">
-                    <option value="en-IN">English</option>
-                    <option value="hi-IN">हिन्दी (Hindi)</option>
-                    <option value="te-IN">తెలుగు (Telugu)</option>
-                    <option value="ta-IN">தமிழ் (Tamil)</option>
-                    <option value="kn-IN">ಕನ್ನಡ (Kannada)</option>
-                    <option value="mr-IN">मరాఠీ (Marathi)</option>
-                </select>
-                
-                <!-- Live Status Ticker -->
-                <div class="hidden md:flex items-center gap-2 bg-red-50 px-3 py-1 rounded-full border border-red-100 animate-pulse ml-2">
-                    <span class="flex h-2 w-2 rounded-full bg-red-500"></span>
-                    <span class="text-[10px] font-bold text-red-700 uppercase">Live: Phase 3 Active</span>
-                </div>
-            </div>
+<!-- WCAG: Skip to main content -->
+<a href="#mainScroll" class="skip-link">Skip to main content</a>
 
-            <div id="progressTracker" class="hidden" style="flex: 1; margin: 0 15px; font-size: 11px; font-weight: 700; color: var(--primary-blue); text-transform: uppercase;">
-                <span id="progressText">Stage 1: Started</span>
-                <div style="height: 4px; background: #eee; border-radius: 2px; margin-top: 4px;">
-                    <div id="progressBar" style="height: 100%; width: 15%; background: var(--primary-orange); border-radius: 2px; transition: 0.5s;"></div>
-                </div>
-            </div>
+<div class="app-shell" id="appShell">
 
-            <div class="flex items-center gap-2">
-                <button id="accessibilityBtn" class="audio-toggle" aria-label="Accessibility Settings">♿</button>
-                <div id="loginSection">
-                    <button id="googleLoginBtn" class="lang-selector" style="background: #ffffff; color: #444; border: 1px solid #ddd; display: flex; align-items: center; gap: 8px;" aria-label="Sign in with Google">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16" alt="" aria-hidden="true">
-                        <span>Sign In</span>
-                    </button>
-                </div>
-                <button id="themeToggle" class="audio-toggle" aria-label="Toggle Dark Mode">🌙</button>
-                <button id="audioToggle" class="audio-toggle" title="Enable Audio" aria-label="Toggle Audio Assistance">🔈</button>
-            </div>
-        </header>
+  <!-- ===== TOP NAV ===== -->
+  <header class="top-nav" role="banner" aria-label="VoteSeva navigation">
+    <div class="nav-brand">
+      <div class="nav-logo-badge" aria-hidden="true">🗳️</div>
+      <div class="nav-logo-text">
+        <h1>VoteSeva</h1>
+        <p>India Election Assistant</p>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="live-badge" role="status" aria-live="polite">
+        <span class="live-dot" aria-hidden="true"></span>
+        Election Day Live
+      </div>
+      <select id="langSelectNav" class="nav-lang" aria-label="Select language">
+        <option value="en-IN">🇮🇳 English</option>
+        <option value="hi-IN">हिन्दी</option>
+        <option value="te-IN">తెలుగు</option>
+        <option value="ta-IN">தமிழ்</option>
+        <option value="kn-IN">ಕನ್ನಡ</option>
+        <option value="mr-IN">मराठी</option>
+      </select>
+      <button id="themeBtn" class="nav-icon-btn" aria-label="Toggle dark mode" aria-pressed="false">🌙</button>
+      <button id="audioBtn" class="nav-icon-btn" aria-label="Toggle audio assistance" aria-pressed="false">🔈</button>
+      <button id="accBtn" class="nav-icon-btn" aria-label="Accessibility settings">♿</button>
+    </div>
+  </header>
 
-        <main id="mainView" class="main-view" role="main">
-            <!-- Landing State -->
-            <div id="landingState">
-                <div class="landing-hero">
-                    <img src="hero.png" alt="Happy Indian citizens showing voting ink" style="width: 100%; max-width: 250px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 20px;">
-                    <h1 class="text-2xl font-bold text-blue-900">VoteSeva AI</h1>
-                    <p class="text-gray-600">Your Smart Election Personal Guide</p>
-                </div>
+  <!-- ===== SIDEBAR (Desktop) ===== -->
+  <nav class="sidebar" aria-label="Primary navigation">
+    <div class="voter-card-sidebar" id="sidebarVoterCard" style="display:none">
+      <div class="vc-name" id="sidebarName">—</div>
+      <div class="vc-epic" id="sidebarEpic">EPIC: —</div>
+      <div class="vc-chips">
+        <span class="vc-chip" id="sidebarBooth">📍 —</span>
+        <span class="vc-chip" id="sidebarSerial"># —</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navigate</div>
+      <button class="sidebar-nav-item active" data-action="home" aria-current="page">
+        <span class="nav-item-icon">🏠</span> Dashboard
+      </button>
+      <button class="sidebar-nav-item" data-action="find_booth">
+        <span class="nav-item-icon">🗺️</span> Find My Booth
+      </button>
+      <button class="sidebar-nav-item" data-action="no_voter_id">
+        <span class="nav-item-icon">🪪</span> No Voter ID?
+      </button>
+      <button class="sidebar-nav-item" data-action="practice">
+        <span class="nav-item-icon">🖥️</span> EVM Practice
+      </button>
+      <button class="sidebar-nav-item" data-action="at_station">
+        <span class="nav-item-icon">🏢</span> At the Booth
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Help</div>
+      <button class="sidebar-nav-item" data-action="sos">
+        <span class="nav-item-icon">🆘</span> SOS / Lost
+      </button>
+      <button class="sidebar-nav-item" onclick="window.open('tel:1950')">
+        <span class="nav-item-icon">📞</span> ECI Helpline 1950
+      </button>
+    </div>
+  </nav>
 
-                <div class="action-grid" role="list">
-                    <div class="action-card" data-action="find_booth" role="listitem" tabindex="0" aria-label="Find my polling booth">
-                        <div class="card-icon">📍</div>
-                        <h3>Find My Booth</h3>
-                        <p>EPIC ID or Name Search</p>
-                    </div>
-                    <div class="action-card" data-action="no_voter_id" role="listitem" tabindex="0" aria-label="Guidance for voting without ID">
-                        <div class="card-icon">🆔</div>
-                        <h3>No Voter ID?</h3>
-                        <p>Valid alternative IDs</p>
-                    </div>
-                    <div class="action-card" data-action="at_station" role="listitem" tabindex="0" aria-label="Step by step guide at polling station">
-                        <div class="card-icon">🏛️</div>
-                        <h3>At the Booth</h3>
-                        <p>Step-by-step guidance</p>
-                    </div>
-                    <div class="action-card" id="practiceBtn" role="listitem" tabindex="0" aria-label="Practice using an EVM machine">
-                        <div class="card-icon">🗳️</div>
-                        <h3>Practice Vote</h3>
-                        <p>EVM Machine Simulator</p>
-                    </div>
-                </div>
-                <div style="margin-top: 30px; text-align: center; color: var(--primary-blue); font-weight: 600;">
-                    <p>👆 Tap an action to begin</p>
-                </div>
-            </div>
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main-content" id="mainContent">
 
-            <!-- Chat Area -->
-            <div id="chatArea" class="hidden flex-1 flex flex-col">
-                <div id="chatMessages" class="flex-1 space-y-4" role="log" aria-live="polite" aria-relevant="additions text"></div>
-                <div id="mapContainer" class="hidden mt-4 rounded-2xl overflow-hidden border-2 border-gray-100 shadow-inner">
-                    <iframe id="mapFrame" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy" title="Interactive Map to Polling Station"></iframe>
-                </div>
-            </div>
-        </main>
-
-        <footer class="input-bar" role="contentinfo">
-            <button id="backBtn" class="circle-btn hidden" style="background: #f1f5f9; color: #64748b;" aria-label="Go Home">🏠</button>
-            <button id="micBtn" class="circle-btn mic-btn" aria-label="Voice Input">🎤</button>
-            
-            <div class="flex-1 flex flex-col gap-2">
-                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" id="action-chips">
-                    <button class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[11px] font-bold border border-blue-100 hover:bg-blue-600 hover:text-white transition-all whitespace-nowrap" onclick="sendAction('Find my booth')">🔍 Find Booth</button>
-                    <button class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-[11px] font-bold border border-red-200 hover:bg-red-600 hover:text-white transition-all whitespace-nowrap" onclick="sendAction('Help, I am lost!')">🆘 Help, I'm Lost!</button>
-                    <button class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[11px] font-bold border border-blue-100 hover:bg-blue-600 hover:text-white transition-all whitespace-nowrap" onclick="sendAction('Practice Voting')">🗳️ Practice</button>
-                </div>
-                <div class="relative flex items-center">
-                    <input type="text" id="userInput" class="chat-input w-full" placeholder="Ask anything about voting..." aria-label="Chat input">
-                    <button id="sendBtn" class="circle-btn send-btn ml-2" aria-label="Send Message">➞</button>
-                </div>
-            </div>
-        </footer>
+    <!-- Hero Header -->
+    <div class="hero-header" id="heroHeader">
+      <div class="flag-stripe" aria-hidden="true">
+        <span class="flag-stripe-s fs-1"></span>
+        <span class="flag-stripe-s fs-2"></span>
+        <span class="flag-stripe-s fs-3"></span>
+      </div>
+      <div style="height:14px"></div>
+      <p class="hero-greeting" id="heroGreeting">Namaste! Ready to cast your vote? 🙏</p>
+      <h2 class="hero-title" id="heroTitle">VoteSeva AI</h2>
+      <div class="hero-stage-badge" role="status" aria-live="polite">
+        <span class="stage-dot" aria-hidden="true"></span>
+        <span id="stageBadgeText">Election Day · Voting Open Till 6 PM</span>
+      </div>
     </div>
 
-    <!-- EVM Simulator Modal -->
-    <div id="evmModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <div class="modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <h2 id="modalTitle" class="text-xl font-bold text-blue-900">EVM Simulator</h2>
-                <button id="closeEvm" class="text-2xl font-bold text-gray-400 hover:text-gray-600" aria-label="Close Modal">&times;</button>
-            </div>
-            <p class="text-sm text-gray-500 mb-6 font-medium">Step 1: Select your candidate by pressing the BLUE button.</p>
-            
-            <div class="space-y-3">
-                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                    <span class="font-bold text-gray-700">Lotus (Candidate A)</span>
-                    <button class="evm-btn" aria-label="Vote for Candidate A"></button>
-                </div>
-                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                    <span class="font-bold text-gray-700">Hand (Candidate B)</span>
-                    <button class="evm-btn" aria-label="Vote for Candidate B"></button>
-                </div>
-                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                    <span class="font-bold text-gray-700">NOTA (None of the Above)</span>
-                    <button class="evm-btn" aria-label="Vote for NOTA"></button>
-                </div>
-            </div>
+    <!-- Language Pills -->
+    <div class="lang-bar" role="group" aria-label="Select language">
+      <button class="lang-pill active" data-lang="en-IN" aria-pressed="true">EN</button>
+      <button class="lang-pill" data-lang="hi-IN" aria-pressed="false">हिं</button>
+      <button class="lang-pill" data-lang="te-IN" aria-pressed="false">తె</button>
+      <button class="lang-pill" data-lang="ta-IN" aria-pressed="false">த</button>
+      <button class="lang-pill" data-lang="kn-IN" aria-pressed="false">ಕ</button>
+      <button class="lang-pill" data-lang="mr-IN" aria-pressed="false">म</button>
+    </div>
 
-            <div id="evmFeedback" class="hidden mt-6 text-center p-4 rounded-xl bg-green-50 border border-green-100">
-                <span class="text-3xl">🔴</span>
-                <p class="mt-2 text-green-800 font-bold">BEEP! Your vote has been recorded.</p>
-            </div>
+    <!-- Journey Tracker -->
+    <div class="journey-section" aria-label="Your voting journey progress">
+      <div class="journey-label">Your Voting Journey</div>
+      <div class="journey-steps" role="list">
+        <div class="j-step done" role="listitem" aria-label="Check voter roll: completed">
+          <div class="j-circle" aria-hidden="true">✓</div>
+          <div class="j-label">Check Roll</div>
         </div>
-    </div>
-
-    <!-- Accessibility Panel -->
-    <div id="accessibilityPanel" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="accTitle">
-        <div class="modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <h2 id="accTitle" class="text-xl font-bold text-blue-900">Accessibility Settings</h2>
-                <button id="closeAcc" class="text-2xl font-bold text-gray-400" aria-label="Close">&times;</button>
-            </div>
-            <div class="space-y-4">
-                <button id="highContrastToggle" class="w-full p-4 bg-gray-100 rounded-xl font-bold text-left">🌗 High Contrast Mode</button>
-                <button id="largeTextToggle" class="w-full p-4 bg-gray-100 rounded-xl font-bold text-left">Aa Large Text Mode</button>
-                <button id="dyslexicFontToggle" class="w-full p-4 bg-gray-100 rounded-xl font-bold text-left">✍️ Dyslexic-Friendly Font</button>
-            </div>
+        <div class="j-line done" aria-hidden="true"></div>
+        <div class="j-step active" id="jStep2" role="listitem" aria-label="Find booth: current step">
+          <div class="j-circle" aria-hidden="true">📍</div>
+          <div class="j-label">Find Booth</div>
         </div>
+        <div class="j-line" id="jLine2" aria-hidden="true"></div>
+        <div class="j-step" id="jStep3" role="listitem" aria-label="At station: upcoming">
+          <div class="j-circle" aria-hidden="true">🏢</div>
+          <div class="j-label">At Station</div>
+        </div>
+        <div class="j-line" id="jLine3" aria-hidden="true"></div>
+        <div class="j-step" id="jStep4" role="listitem" aria-label="Vote cast: upcoming">
+          <div class="j-circle" aria-hidden="true">✅</div>
+          <div class="j-label">Vote Cast</div>
+        </div>
+      </div>
     </div>
 
-    <script type="module" src="app.js"></script>
+    <!-- Scrollable Content -->
+    <div class="scroll-area" id="mainScroll" tabindex="-1">
+
+      <!-- Landing Panel -->
+      <div id="landingPanel">
+        <div class="section-title">What do you need?</div>
+        <div class="action-grid" role="list" aria-label="Main actions">
+          <button class="action-card primary" data-action="find_booth" role="listitem"
+            aria-label="Find my polling booth using EPIC ID or name">
+            <span class="action-icon" aria-hidden="true">🗺️</span>
+            <span class="action-label" id="card1Label">Find My Booth</span>
+            <span class="action-sub" id="card1Sub">EPIC ID or name search</span>
+          </button>
+          <button class="action-card green" data-action="no_voter_id" role="listitem"
+            aria-label="Guidance for voting without a voter ID card">
+            <span class="action-icon" aria-hidden="true">🪪</span>
+            <span class="action-label" id="card2Label">No Voter ID?</span>
+            <span class="action-sub" id="card2Sub">12 valid alternatives</span>
+          </button>
+          <button class="action-card orange" id="practiceCardBtn" role="listitem"
+            aria-label="Practice using an EVM voting machine">
+            <span class="action-icon" aria-hidden="true">🖥️</span>
+            <span class="action-label" id="card3Label">EVM Practice</span>
+            <span class="action-sub" id="card3Sub">Try the simulator</span>
+          </button>
+          <button class="action-card" data-action="at_station" role="listitem"
+            aria-label="Step by step guide when at the polling station">
+            <span class="action-icon" aria-hidden="true">🏢</span>
+            <span class="action-label" id="card4Label">At the Booth</span>
+            <span class="action-sub" id="card4Sub">Step-by-step guide</span>
+          </button>
+        </div>
+        <p style="text-align:center;color:var(--text-muted);font-size:12px;margin-top:12px;">
+          👆 Tap an action or type your question below
+        </p>
+      </div>
+
+      <!-- Chat Messages -->
+      <div id="chatPanel" class="chat-section hidden" role="log" aria-live="polite" aria-relevant="additions text" aria-label="Conversation with VoteSeva AI"></div>
+
+      <!-- Map -->
+      <div id="mapContainer" class="map-card hidden">
+        <div class="map-card-header">
+          <div class="map-card-title">📍 Directions to Your Booth</div>
+          <a id="mapDirectLink" href="#" target="_blank" rel="noopener noreferrer" class="map-link">Open in Maps ↗</a>
+        </div>
+        <iframe id="mapFrame" width="100%" height="180" style="border:0;display:block;"
+          allowfullscreen="" loading="lazy"
+          title="Interactive Map to Polling Station"
+          referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+
+    </div>
+
+    <!-- Input Bar -->
+    <footer class="input-bar" role="contentinfo" aria-label="Message input">
+      <div class="quick-chips" role="group" aria-label="Quick actions">
+        <button class="chip" onclick="sendAction('Find my booth')">🔍 Find Booth</button>
+        <button class="chip" onclick="sendAction('I am at the booth')">🏢 At Booth</button>
+        <button class="chip" onclick="sendAction('I need directions to my booth')">🗺️ Directions</button>
+        <button class="chip red" onclick="sendAction('SOS I am lost')">🆘 SOS</button>
+        <button class="chip" onclick="sendAction('I lost my voter ID')">🆔 No ID</button>
+      </div>
+      <div class="input-row">
+        <button id="backBtn" class="icon-btn back-btn hidden" aria-label="Go back to home" style="border-radius:50%;flex-shrink:0;">🏠</button>
+        <button id="micBtn" class="icon-btn mic-btn-input" aria-label="Voice input — speak your question">🎤</button>
+        <input type="text" id="chatInput" class="chat-input"
+          placeholder="Ask anything about voting..."
+          aria-label="Type your question about voting"
+          autocomplete="off"
+          maxlength="500">
+        <button id="sendBtn" class="icon-btn send-btn-input" aria-label="Send message">➤</button>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ===== RIGHT PANEL — AI CHAT (Desktop) ===== -->
+  <aside class="right-panel" aria-label="AI assistant chat panel">
+    <div class="chat-panel-header">
+      <div class="ai-avatar" aria-hidden="true">🤖</div>
+      <div>
+        <div class="ai-name">VoteSeva AI</div>
+        <div class="ai-status" role="status">● Online · Powered by Gemini</div>
+      </div>
+      <button class="tts-panel-btn" id="ttsPanelBtn" aria-label="Toggle read aloud for AI responses" aria-pressed="false">🔊 Read Aloud</button>
+    </div>
+    <div class="panel-messages" id="panelMessages" role="log" aria-live="polite" aria-label="AI conversation history"></div>
+    <div class="panel-input-area">
+      <div class="input-row">
+        <input type="text" id="panelInput" class="chat-input" placeholder="Ask anything about voting..." aria-label="Desktop chat input" maxlength="500">
+        <button id="panelMicBtn" class="icon-btn mic-btn-input" aria-label="Voice input">🎤</button>
+        <button id="panelSendBtn" class="icon-btn send-btn-input" aria-label="Send message">➤</button>
+      </div>
+      <div class="quick-chips" style="margin-top:8px">
+        <button class="chip" onclick="sendAction('Find my booth')">🗺️ Booth</button>
+        <button class="chip" onclick="sendAction('I am at the booth')">🏢 At Booth</button>
+        <button class="chip red" onclick="sendAction('SOS I am lost')">🆘 SOS</button>
+        <button class="chip" onclick="sendAction('I lost my voter ID')">🆔 No ID</button>
+        <button class="chip" onclick="window.open('tel:1950')">📞 1950</button>
+      </div>
+    </div>
+  </aside>
+
+</div><!-- end app-shell -->
+
+<!-- ===== EVM SIMULATOR MODAL ===== -->
+<div id="evmModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="evmTitle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 class="modal-title" id="evmTitle">🖥️ EVM Simulator</h2>
+      <button class="close-btn" id="closeEvm" aria-label="Close EVM simulator">&times;</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+      Practice before election day! Press the blue button to vote for a candidate, then wait for the beep.
+    </p>
+    <div class="evm-machine" role="group" aria-label="Electronic Voting Machine">
+      <div class="evm-screen" aria-live="polite" id="evmScreen">BALLOT UNIT — PRESS BLUE BUTTON</div>
+      <div class="evm-candidates">
+        <div class="evm-row">
+          <span class="evm-candidate-name">🪷 Lotus (Candidate A)</span>
+          <button class="evm-btn" aria-label="Vote for Candidate A — Lotus">VOTE</button>
+        </div>
+        <div class="evm-row">
+          <span class="evm-candidate-name">✋ Hand (Candidate B)</span>
+          <button class="evm-btn" aria-label="Vote for Candidate B — Hand">VOTE</button>
+        </div>
+        <div class="evm-row">
+          <span class="evm-candidate-name">⭕ NOTA (None of the Above)</span>
+          <button class="evm-btn" aria-label="Vote for NOTA — None of the Above">VOTE</button>
+        </div>
+      </div>
+    </div>
+    <div id="evmFeedback" class="evm-feedback hidden" role="alert">
+      <div style="font-size:32px">🔴</div>
+      <p style="color:var(--india-green);font-weight:700;font-size:15px;margin-top:8px;">BEEP! Your vote has been recorded.</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">In a real EVM, a long beep confirms your vote is cast.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ACCESSIBILITY PANEL MODAL ===== -->
+<div id="accModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="accTitle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 class="modal-title" id="accTitle">♿ Accessibility Settings</h2>
+      <button class="close-btn" id="closeAcc" aria-label="Close accessibility settings">&times;</button>
+    </div>
+    <div>
+      <div class="acc-toggle-row">
+        <label class="acc-toggle-label" for="hcToggle">🔆 High Contrast Mode</label>
+        <button class="toggle-switch" id="hcToggle" role="switch" aria-checked="false" aria-label="Toggle high contrast mode"></button>
+      </div>
+      <div class="acc-toggle-row">
+        <label class="acc-toggle-label" for="ltToggle">🔤 Large Text (22px)</label>
+        <button class="toggle-switch" id="ltToggle" role="switch" aria-checked="false" aria-label="Toggle large text mode"></button>
+      </div>
+      <div class="acc-toggle-row">
+        <label class="acc-toggle-label" for="dyToggle">✍️ Dyslexia-Friendly Font</label>
+        <button class="toggle-switch" id="dyToggle" role="switch" aria-checked="false" aria-label="Toggle dyslexia-friendly font"></button>
+      </div>
+      <div class="acc-toggle-row">
+        <label class="acc-toggle-label" for="audioToggleAcc">🔊 Audio Assistance (TTS)</label>
+        <button class="toggle-switch" id="audioToggleAcc" role="switch" aria-checked="false" aria-label="Toggle text to speech"></button>
+      </div>
+      <div class="acc-toggle-row">
+        <label class="acc-toggle-label" for="darkToggleAcc">🌙 Dark Mode</label>
+        <button class="toggle-switch" id="darkToggleAcc" role="switch" aria-checked="false" aria-label="Toggle dark mode"></button>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:16px;text-align:center;">
+      Settings are saved automatically for your next visit.
+    </p>
+  </div>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
