@@ -22,22 +22,29 @@ const backBtn        = document.getElementById('backBtn');
 const mapContainer   = document.getElementById('mapContainer');
 const mapFrame       = document.getElementById('mapFrame');
 const mapDirectLink  = document.getElementById('mapDirectLink');
-const panelMessages  = document.getElementById('panelMessages');
-const panelInput     = document.getElementById('panelInput');
-const panelSendBtn   = document.getElementById('panelSendBtn');
-const panelMicBtn    = document.getElementById('panelMicBtn');
 const mainScroll     = document.getElementById('mainScroll');
 const evmModal       = document.getElementById('evmModal');
 const accModal       = document.getElementById('accModal');
 const evmFeedback    = document.getElementById('evmFeedback');
 const evmScreen      = document.getElementById('evmScreen');
 
-// Sidebar voter info
+// Sidebar (left) voter info
 const sidebarVoterCard = document.getElementById('sidebarVoterCard');
 const sidebarName      = document.getElementById('sidebarName');
 const sidebarEpic      = document.getElementById('sidebarEpic');
 const sidebarBooth     = document.getElementById('sidebarBooth');
 const sidebarSerial    = document.getElementById('sidebarSerial');
+
+// Right panel voter card
+const voterFoundSection = document.getElementById('voterFoundSection');
+const voterSearchPrompt = document.getElementById('voterSearchPrompt');
+const vfcName           = document.getElementById('vfcName');
+const vfcEpic           = document.getElementById('vfcEpic');
+const vfcBooth          = document.getElementById('vfcBooth');
+const vfcPart           = document.getElementById('vfcPart');
+const vfcSerial         = document.getElementById('vfcSerial');
+const vfcLocation       = document.getElementById('vfcLocation');
+const vfcDirBtn         = document.getElementById('vfcDirBtn');
 
 // ── TRANSLATIONS ──────────────────────────────────────────────────────────────
 const i18n = {
@@ -126,7 +133,6 @@ function applyLanguage(lang) {
     document.getElementById('card4Label').textContent    = t.card4;
     document.getElementById('card4Sub').textContent      = t.card4s;
     chatInput.placeholder   = t.placeholder;
-    if (panelInput) panelInput.placeholder = t.placeholder;
 
     // Sync nav select
     const navSel = document.getElementById('langSelectNav');
@@ -169,11 +175,6 @@ function syncAudioUI() {
     btn.setAttribute('aria-pressed', isAudioEnabled ? 'true' : 'false');
     btn.classList.toggle('active', isAudioEnabled);
 
-    const panelBtn = document.getElementById('ttsPanelBtn');
-    if (panelBtn) {
-        panelBtn.textContent = isAudioEnabled ? '🔊 On' : '🔊 Off';
-        panelBtn.setAttribute('aria-pressed', isAudioEnabled ? 'true' : 'false');
-    }
     const accToggle = document.getElementById('audioToggleAcc');
     if (accToggle) {
         accToggle.classList.toggle('on', isAudioEnabled);
@@ -185,12 +186,6 @@ document.getElementById('audioBtn').addEventListener('click', () => {
     isAudioEnabled = !isAudioEnabled;
     localStorage.setItem('vsAudio', isAudioEnabled);
     if (!isAudioEnabled) window.speechSynthesis?.cancel();
-    syncAudioUI();
-});
-
-document.getElementById('ttsPanelBtn')?.addEventListener('click', () => {
-    isAudioEnabled = !isAudioEnabled;
-    localStorage.setItem('vsAudio', isAudioEnabled);
     syncAudioUI();
 });
 
@@ -220,14 +215,37 @@ function setJourneyStep(step) {
     if (badge && stageMap[step]) badge.textContent = stageMap[step];
 }
 
-// ── SIDEBAR VOTER CARD ────────────────────────────────────────────────────────
+// ── VOTER CARD (left sidebar + right panel) ───────────────────────────────────
 function showSidebarVoter(voter) {
-    if (!voter || !sidebarVoterCard) return;
-    sidebarName.textContent   = voter.name || '—';
-    sidebarEpic.textContent   = 'EPIC: ' + (voter.epicNumber || '—');
-    sidebarBooth.textContent  = '📍 ' + (voter.boothName || '—');
-    sidebarSerial.textContent = '#' + (voter.serialNumber || '—');
-    sidebarVoterCard.style.display = 'block';
+    if (!voter) return;
+
+    // Left sidebar mini-card
+    if (sidebarVoterCard) {
+        sidebarName.textContent   = voter.name || '—';
+        sidebarEpic.textContent   = 'EPIC: ' + (voter.epicNumber || '—');
+        sidebarBooth.textContent  = '📍 ' + (voter.boothName || '—');
+        sidebarSerial.textContent = '#' + (voter.serialNumber || '—');
+        sidebarVoterCard.style.display = 'block';
+    }
+
+    // Right panel full voter card
+    if (voterFoundSection && voterSearchPrompt) {
+        vfcName.textContent     = voter.name || '—';
+        vfcEpic.textContent     = 'EPIC: ' + (voter.epicNumber || '—');
+        vfcBooth.textContent    = voter.boothName || '—';
+        vfcPart.textContent     = voter.partNumber || '—';
+        vfcSerial.textContent   = voter.serialNumber || '—';
+        vfcLocation.textContent = voter.location || '—';
+        voterSearchPrompt.style.display = 'none';
+        voterFoundSection.style.display = 'block';
+
+        // Wire directions button
+        if (vfcDirBtn && voter.boothName) {
+            vfcDirBtn.onclick = () => {
+                sendMessage('I need directions to my booth');
+            };
+        }
+    }
 }
 
 // ── CHAT RENDERING ────────────────────────────────────────────────────────────
@@ -301,19 +319,6 @@ function addMessage(text, sender) {
 
     chatPanel.appendChild(wrapper);
     mainScroll.scrollTop = mainScroll.scrollHeight;
-
-    // ── Desktop right panel ──
-    if (panelMessages) {
-        const pw = document.createElement('div');
-        pw.className = `message-wrapper ${sender}`;
-        const pb = document.createElement('div');
-        pb.className = `message ${sender}`;
-        pb.innerHTML = sender === 'bot' ? formatResponse(text) : '';
-        if (sender === 'user') pb.textContent = text;
-        pw.appendChild(pb);
-        panelMessages.appendChild(pw);
-        panelMessages.scrollTop = panelMessages.scrollHeight;
-    }
 
     // Share location offer
     if (sender === 'bot' && /\b(location|area|where)\b/i.test(text)) {
@@ -426,13 +431,23 @@ async function sendMessage(textOverride = null) {
 
         if (data.reply) addMessage(data.reply, 'bot');
 
-        // Extract voter info from response if found
-        const boothMatch = data.reply?.match(/Booth:\s*([^,\n]+)/);
-        const serialMatch = data.reply?.match(/Serial(?:\s+No)?:\s*(\w+)/);
-        const epicMatch = data.reply?.match(/EPIC:\s*(\w+)/);
-        if (boothMatch) {
-            showSidebarVoter({ name: text, boothName: boothMatch[1].trim(), serialNumber: serialMatch?.[1], epicNumber: epicMatch?.[1] });
-            setJourneyStep(3);
+        // When backend returns booth_info, extract all voter fields from the reply
+        if (data.type === 'booth_info') {
+            const boothMatch    = data.reply?.match(/polling station is \*\*([^*]+)\*\*/i) || data.reply?.match(/Booth[:\s]+([^\n.]+)/i);
+            const serialMatch   = data.reply?.match(/Serial (?:No(?:\.)?|No )?(?:is |\*\*)?(\d+)/i);
+            const partMatch     = data.reply?.match(/Part No(?:\.)?(?:\sis\s|\s\*\*)?([^\s,.*\n]+)/i);
+            const epicMatch     = data.reply?.match(/EPIC[:\s]+(\w+)/i);
+            if (boothMatch) {
+                showSidebarVoter({
+                    name:         text,
+                    boothName:    boothMatch[1].trim(),
+                    partNumber:   partMatch?.[1]?.trim(),
+                    serialNumber: serialMatch?.[1]?.trim(),
+                    epicNumber:   epicMatch?.[1]?.trim(),
+                    location:     null
+                });
+                setJourneyStep(3);
+            }
         }
 
         if (data.stage) setJourneyStep(Math.min(4, data.stage));
@@ -453,9 +468,6 @@ window.sendAction = text => {
 // ── KEYBOARD & BUTTON HANDLERS ────────────────────────────────────────────────
 sendBtn.addEventListener('click', () => sendMessage());
 chatInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-
-if (panelSendBtn) panelSendBtn.addEventListener('click', () => { sendMessage(panelInput.value.trim()); panelInput.value = ''; });
-if (panelInput) panelInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(panelInput.value.trim()); panelInput.value = ''; } });
 
 backBtn.addEventListener('click', () => {
     landingPanel.classList.remove('hidden');
@@ -515,7 +527,6 @@ function setupVoice(inputEl, triggerBtn) {
     });
 }
 setupVoice(chatInput, micBtn);
-if (panelInput && panelMicBtn) setupVoice(panelInput, panelMicBtn);
 
 // ── EVM SIMULATOR ─────────────────────────────────────────────────────────────
 function openEvmModal() { evmModal.classList.remove('hidden'); document.getElementById('closeEvm').focus(); }
@@ -611,14 +622,4 @@ trapFocus(accModal);
     if (localStorage.getItem('vsLT') === 'true') { document.body.classList.add('large-text'); document.getElementById('ltToggle')?.classList.add('on'); }
     if (localStorage.getItem('vsDY') === 'true') { document.body.classList.add('dyslexic'); document.getElementById('dyToggle')?.classList.add('on'); }
 
-    // Welcome message in right panel
-    if (panelMessages) {
-        const w = document.createElement('div');
-        w.className = 'message-wrapper bot';
-        const b = document.createElement('div');
-        b.className = 'message bot';
-        b.innerHTML = '<div class="step-text">👋 <strong>Namaste!</strong> I\'m VoteSeva, your AI election guide. Ask me to find your booth, check your name in the voter list, or guide you through the voting process.</div>';
-        w.appendChild(b);
-        panelMessages.appendChild(w);
-    }
 })();

@@ -604,61 +604,91 @@ body {
     100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
 }
 
-/* ===== RIGHT PANEL / DESKTOP CHAT ===== */
+/* ===== RIGHT PANEL — VOTER INFO ===== */
 .right-panel {
     display: none;
     flex-direction: column;
-    background: var(--surface);
-    overflow: hidden;
+    background: var(--surface-2);
+    overflow-y: auto;
+    border-left: 1px solid var(--border);
+    gap: 0;
 }
 @media (min-width: 900px) { .right-panel { display: flex; } }
 
-.chat-panel-header {
-    background: var(--surface-2);
+.rp-section {
+    padding: 14px 16px;
     border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
 }
-.ai-avatar {
-    width: 36px; height: 36px;
-    background: linear-gradient(135deg, var(--navy), #4f46e5);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 17px;
+.rp-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-light);
+    margin-bottom: 10px;
+}
+
+/* Voter found card */
+.voter-found-card {
+    background: linear-gradient(135deg, var(--navy), #1a237e);
+    border-radius: var(--radius-md);
+    padding: 14px;
     color: #fff;
-    flex-shrink: 0;
 }
-.ai-name { font-size: 13px; font-weight: 700; }
-.ai-status { font-size: 10px; color: #22c55e; font-weight: 600; }
-.tts-panel-btn {
-    margin-left: auto;
-    padding: 5px 12px;
+.vfc-name { font-size: 15px; font-weight: 800; margin-bottom: 2px; }
+.vfc-epic { font-size: 10px; opacity: 0.65; margin-bottom: 10px; }
+.vfc-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.vfc-row { display: flex; align-items: flex-start; gap: 8px; }
+.vfc-key { font-size: 10px; font-weight: 700; opacity: 0.65; flex-shrink: 0; min-width: 68px; }
+.vfc-val { font-size: 11px; font-weight: 600; line-height: 1.35; }
+.vfc-dir-btn {
+    width: 100%;
+    padding: 8px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
     border-radius: 8px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    font-size: 11px;
+    color: #fff;
+    font-size: 12px;
     font-weight: 700;
     cursor: pointer;
     font-family: inherit;
-    color: var(--text);
+    transition: background 0.2s;
+}
+.vfc-dir-btn:hover { background: rgba(255,255,255,0.25); }
+
+/* Empty state */
+.rp-empty-card {
+    background: var(--surface);
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    text-align: center;
 }
 
-.panel-messages {
-    flex: 1;
-    padding: 14px;
-    overflow-y: auto;
+/* Reference list */
+.rp-ref-list { display: flex; flex-direction: column; gap: 10px; }
+.rp-ref-item { display: flex; align-items: flex-start; gap: 10px; }
+.rp-ref-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.rp-ref-title { font-size: 11px; font-weight: 700; color: var(--text); }
+.rp-ref-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+/* Checklist */
+.rp-checklist { display: flex; flex-direction: column; gap: 8px; }
+.rp-check-item {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
 }
-
-.panel-input-area {
-    border-top: 1px solid var(--border);
-    padding: 12px;
+.rp-check-item input[type="checkbox"] {
+    width: 15px; height: 15px;
+    accent-color: var(--india-green);
+    cursor: pointer;
+    flex-shrink: 0;
 }
+.rp-check-item span { line-height: 1.3; }
 
 /* ===== MODAL ===== */
 .modal-overlay {

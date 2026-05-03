@@ -214,31 +214,74 @@
     </footer>
   </main>
 
-  <!-- ===== RIGHT PANEL — AI CHAT (Desktop) ===== -->
-  <aside class="right-panel" aria-label="AI assistant chat panel">
-    <div class="chat-panel-header">
-      <div class="ai-avatar" aria-hidden="true">🤖</div>
-      <div>
-        <div class="ai-name">VoteSeva AI</div>
-        <div class="ai-status" role="status">● Online · Powered by Gemini</div>
-      </div>
-      <button class="tts-panel-btn" id="ttsPanelBtn" aria-label="Toggle read aloud for AI responses" aria-pressed="false">🔊 Read Aloud</button>
-    </div>
-    <div class="panel-messages" id="panelMessages" role="log" aria-live="polite" aria-label="AI conversation history"></div>
-    <div class="panel-input-area">
-      <div class="input-row">
-        <input type="text" id="panelInput" class="chat-input" placeholder="Ask anything about voting..." aria-label="Desktop chat input" maxlength="500">
-        <button id="panelMicBtn" class="icon-btn mic-btn-input" aria-label="Voice input">🎤</button>
-        <button id="panelSendBtn" class="icon-btn send-btn-input" aria-label="Send message">➤</button>
-      </div>
-      <div class="quick-chips" style="margin-top:8px">
-        <button class="chip" onclick="sendAction('Find my booth')">🗺️ Booth</button>
-        <button class="chip" onclick="sendAction('I am at the booth')">🏢 At Booth</button>
-        <button class="chip red" onclick="sendAction('SOS I am lost')">🆘 SOS</button>
-        <button class="chip" onclick="sendAction('I lost my voter ID')">🆔 No ID</button>
-        <button class="chip" onclick="window.open('tel:1950')">📞 1950</button>
+  <!-- ===== RIGHT PANEL — VOTER INFO & REFERENCE ===== -->
+  <aside class="right-panel" aria-label="Voter information panel">
+
+    <!-- Voter Card (hidden until voter is found) -->
+    <div class="rp-section" id="voterFoundSection" style="display:none">
+      <div class="rp-label">✅ Voter Found</div>
+      <div class="voter-found-card" id="voterFoundCard">
+        <div class="vfc-name" id="vfcName">—</div>
+        <div class="vfc-epic" id="vfcEpic">EPIC: —</div>
+        <div class="vfc-rows">
+          <div class="vfc-row"><span class="vfc-key">📍 Booth</span><span class="vfc-val" id="vfcBooth">—</span></div>
+          <div class="vfc-row"><span class="vfc-key">🚪 Part No</span><span class="vfc-val" id="vfcPart">—</span></div>
+          <div class="vfc-row"><span class="vfc-key"># Serial</span><span class="vfc-val" id="vfcSerial">—</span></div>
+          <div class="vfc-row"><span class="vfc-key">📍 Area</span><span class="vfc-val" id="vfcLocation">—</span></div>
+        </div>
+        <button class="vfc-dir-btn" id="vfcDirBtn">🗺️ Get Directions</button>
       </div>
     </div>
+
+    <!-- Prompt before voter is found -->
+    <div class="rp-section" id="voterSearchPrompt">
+      <div class="rp-label">Your Voter Details</div>
+      <div class="rp-empty-card">
+        <div style="font-size:32px;margin-bottom:8px">🗳️</div>
+        <p style="font-size:12px;font-weight:600;color:var(--text-muted);">Your booth details will appear here once found.</p>
+        <p style="font-size:11px;color:var(--text-light);margin-top:4px;">Type your name or EPIC number in the chat to get started.</p>
+      </div>
+    </div>
+
+    <!-- Election Day Reference -->
+    <div class="rp-section">
+      <div class="rp-label">Election Day Reference</div>
+      <div class="rp-ref-list">
+        <div class="rp-ref-item">
+          <span class="rp-ref-icon">🕖</span>
+          <div><div class="rp-ref-title">Polling Hours</div><div class="rp-ref-sub">7:00 AM – 6:00 PM</div></div>
+        </div>
+        <div class="rp-ref-item">
+          <span class="rp-ref-icon">📞</span>
+          <div><div class="rp-ref-title">ECI Voter Helpline</div><div class="rp-ref-sub"><a href="tel:1950" style="color:var(--navy);font-weight:700;">1950</a> (Toll free)</div></div>
+        </div>
+        <div class="rp-ref-item">
+          <span class="rp-ref-icon">🌐</span>
+          <div><div class="rp-ref-title">Voter Roll Search</div><div class="rp-ref-sub"><a href="https://electoralsearch.eci.gov.in" target="_blank" rel="noopener" style="color:var(--navy);font-weight:700;">electoralsearch.eci.gov.in</a></div></div>
+        </div>
+        <div class="rp-ref-item">
+          <span class="rp-ref-icon">🪪</span>
+          <div><div class="rp-ref-title">No Voter ID?</div><div class="rp-ref-sub">Aadhaar, PAN, Passport, Driving Licence + 8 more valid</div></div>
+        </div>
+        <div class="rp-ref-item">
+          <span class="rp-ref-icon">🖥️</span>
+          <div><div class="rp-ref-title">EVM Practice</div><div class="rp-ref-sub"><button onclick="openEvmModal()" style="background:none;border:none;color:var(--navy);font-weight:700;cursor:pointer;font-size:11px;padding:0;">Open simulator →</button></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What to Bring -->
+    <div class="rp-section">
+      <div class="rp-label">What to Bring to the Booth</div>
+      <div class="rp-checklist">
+        <label class="rp-check-item"><input type="checkbox"> <span>Photo ID (Voter Card / Aadhaar)</span></label>
+        <label class="rp-check-item"><input type="checkbox"> <span>Know your Serial No. (from chat)</span></label>
+        <label class="rp-check-item"><input type="checkbox"> <span>Charged phone (for maps)</span></label>
+        <label class="rp-check-item"><input type="checkbox"> <span>Water bottle (long queues likely)</span></label>
+        <label class="rp-check-item"><input type="checkbox"> <span>Arrive before 5:30 PM</span></label>
+      </div>
+    </div>
+
   </aside>
 
 </div><!-- end app-shell -->
