@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoteSeva Desktop UX — India Scale</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    color: #1e293b;
+    font-size: 14px;
+  }
+
+  /* TOP NAV */
+  .topnav {
+    background: #000080;
+    color: #fff;
+    padding: 0 32px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  }
+  .nav-left { display: flex; align-items: center; gap: 16px; }
+  .nav-logo { display: flex; align-items: center; gap: 10px; }
+  .nav-logo-icon {
+    background: #FF9933;
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .nav-logo-text h1 { font-size: 17px; font-weight: 700; }
+  .nav-logo-text p { font-size: 10px; opacity: 0.7; }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .lang-select {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .nav-badge {
+    background: #138808;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .nav-acc {
+    display: flex;
+    gap: 6px;
+  }
+  .acc-icon {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  /* LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr 320px;
+    min-height: calc(100vh - 56px);
+  }
+
+  /* LEFT SIDEBAR */
+  .sidebar {
+    background: #fff;
+    border-right: 1px solid #e2e8f0;
+    padding: 20px 0;
+  }
+  .sidebar-section { padding: 0 16px; margin-bottom: 20px; }
+  .sidebar-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 0 4px;
+    margin-bottom: 8px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background: #f1f5f9; }
+  .nav-item.active { background: #000080; color: #fff; }
+  .nav-item.active .nav-icon { background: rgba(255,255,255,0.15); }
+  .nav-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .nav-text { font-size: 12.5px; font-weight: 600; }
+  .nav-badge-small {
+    margin-left: auto;
+    background: #FF9933;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+
+  /* Voter Card */
+  .voter-card {
+    margin: 0 16px 20px;
+    background: linear-gradient(135deg, #000080, #1a237e);
+    color: #fff;
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .voter-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .voter-epic { font-size: 10px; opacity: 0.7; margin-bottom: 10px; }
+  .voter-detail { display: flex; gap: 8px; flex-wrap: wrap; }
+  .voter-chip {
+    background: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  /* MAIN CONTENT */
+  .main { padding: 22px; overflow-y: auto; }
+
+  .journey-bar {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .jstep {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+  }
+  .jstep-circle {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    border: 2px solid #e2e8f0;
+    background: #f8fafc;
+    color: #94a3b8;
+    font-weight: 700;
+    z-index: 1;
+  }
+  .jstep.done .jstep-circle { background: #138808; border-color: #138808; color: #fff; }
+  .jstep.active .jstep-circle { background: #000080; border-color: #000080; color: #fff; box-shadow: 0 0 0 5px rgba(0,0,128,0.12); }
+  .jstep-label { font-size: 10px; font-weight: 600; color: #94a3b8; margin-top: 5px; }
+  .jstep.done .jstep-label, .jstep.active .jstep-label { color: #1e293b; }
+  .jstep-line { flex: 1; height: 2px; background: #e2e8f0; margin-top: -20px; }
+  .jstep-line.done { background: #138808; }
+
+  .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+
+  .action-big-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .action-big-card:hover { border-color: #000080; box-shadow: 0 4px 16px rgba(0,0,128,0.12); }
+  .action-big-card.primary { background: #000080; border-color: #000080; color: #fff; }
+  .action-big-icon { font-size: 32px; }
+  .action-big-body {}
+  .action-big-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  .action-big-desc { font-size: 11px; color: #64748b; line-height: 1.4; }
+  .action-big-card.primary .action-big-desc { color: rgba(255,255,255,0.65); }
+  .cta-btn {
+    margin-top: 10px;
+    background: #FF9933;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* MAP PREVIEW */
+  .map-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+  }
+  .map-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .map-card-title { font-size: 13px; font-weight: 700; }
+  .map-link { font-size: 11px; color: #000080; font-weight: 600; }
+  .map-placeholder {
+    background: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 50%, #dcfce7 100%);
+    border-radius: 10px;
+    height: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #000080;
+    font-size: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .map-placeholder::after {
+    content: '';
+    position: absolute;
+    width: 24px; height: 24px;
+    background: #000080;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    top: 42%;
+    left: 48%;
+    box-shadow: 0 2px 8px rgba(0,0,128,0.3);
+  }
+  .map-placeholder-label { font-size: 11px; font-weight: 600; margin-top: 8px; color: #3730a3; }
+
+  /* ACCESSIBILITY PANEL */
+  .acc-panel {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .acc-panel-title { font-size: 12px; font-weight: 700; margin-bottom: 10px; color: #1e293b; }
+  .acc-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .acc-toggle-row:last-child { border-bottom: none; }
+  .acc-toggle-label { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #374151; }
+  .toggle {
+    width: 36px; height: 20px;
+    border-radius: 10px;
+    background: #e2e8f0;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: #138808; }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    top: 2px; left: 2px;
+    transition: left 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { left: 18px; }
+
+  /* RIGHT PANEL - CHAT */
+  .chat-panel {
+    background: #fff;
+    border-left: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ai-avatar {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, #000080, #4f46e5);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    color: #fff;
+  }
+  .ai-info { flex: 1; }
+  .ai-name { font-size: 13px; font-weight: 700; }
+  .ai-status { font-size: 10px; color: #22c55e; font-weight: 600; }
+  .tts-btn {
+    padding: 5px 10px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    border: none;
+    font-size: 11px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+  .msg-ai {
+    background: #f1f5f9;
+    border-radius: 12px 12px 12px 3px;
+    padding: 12px 14px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #1e293b;
+    max-width: 90%;
+  }
+  .msg-user {
+    background: #000080;
+    border-radius: 12px 12px 3px 12px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #fff;
+    max-width: 85%;
+    align-self: flex-end;
+  }
+  .msg-step { display: flex; gap: 8px; margin-bottom: 5px; align-items: flex-start; }
+  .msg-step-num {
+    flex-shrink: 0;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #000080;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .msg-step-text { font-size: 11.5px; line-height: 1.4; }
+
+  .chat-input-area {
+    border-top: 1px solid #e2e8f0;
+    padding: 12px 14px;
+  }
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+    background: #f1f5f9;
+    border-radius: 12px;
+    padding: 8px 12px;
+    align-items: center;
+  }
+  .chat-input {
+    flex: 1;
+    border: none;
+    background: none;
+    outline: none;
+    font-size: 12.5px;
+    color: #1e293b;
+  }
+  .chat-input::placeholder { color: #94a3b8; }
+  .send-btn {
+    width: 32px; height: 32px;
+    background: #000080;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .mic-big {
+    width: 32px; height: 32px;
+    background: #FF9933;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .quick-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .chip {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .chip:hover { background: #000080; color: #fff; border-color: #000080; }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div class="topnav">
+  <div class="nav-left">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">🗳️</div>
+      <div class="nav-logo-text">
+        <h1>VoteSeva</h1>
+        <p>India Election Assistant — For 970M Voters</p>
+      </div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <select class="lang-select">
+      <option>🇮🇳 English</option>
+      <option>हिंदी</option>
+      <option>తెలుగు</option>
+      <option>தமிழ்</option>
+    </select>
+    <div class="nav-badge">🟢 Election Day Live</div>
+    <div class="nav-acc">
+      <div class="acc-icon" title="High Contrast">🔆</div>
+      <div class="acc-icon" title="Large Text">🔤</div>
+      <div class="acc-icon" title="Dark Mode">🌙</div>
+    </div>
+  </div>
+</div>
+
+<!-- 3-COLUMN LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- Voter card -->
+    <div class="voter-card">
+      <div class="voter-name">Priya Sharma</div>
+      <div class="voter-epic">EPIC: APE1234567</div>
+      <div class="voter-detail">
+        <div class="voter-chip">📍 Ward 7</div>
+        <div class="voter-chip">🏢 Booth 14</div>
+        <div class="voter-chip">#247</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navigation</div>
+      <div class="nav-item active">
+        <div class="nav-icon">🏠</div>
+        <div class="nav-text">Dashboard</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">🗺️</div>
+        <div class="nav-text">Find My Booth</div>
+        <div class="nav-badge-small">LIVE</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">🪪</div>
+        <div class="nav-text">Check Voter Roll</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">🖥️</div>
+        <div class="nav-text">EVM Simulator</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">📋</div>
+        <div class="nav-text">Voting Process</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Help</div>
+      <div class="nav-item">
+        <div class="nav-icon">🆘</div>
+        <div class="nav-text">SOS / Lost</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">📞</div>
+        <div class="nav-text">ECI Helpline 1950</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">🆔</div>
+        <div class="nav-text">No Voter ID?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- Journey bar -->
+    <div class="journey-bar">
+      <div class="jstep done">
+        <div class="jstep-circle">✓</div>
+        <div class="jstep-label">Register</div>
+      </div>
+      <div class="jstep-line done"></div>
+      <div class="jstep done">
+        <div class="jstep-circle">✓</div>
+        <div class="jstep-label">Check Roll</div>
+      </div>
+      <div class="jstep-line done"></div>
+      <div class="jstep active">
+        <div class="jstep-circle">📍</div>
+        <div class="jstep-label">Find Booth</div>
+      </div>
+      <div class="jstep-line"></div>
+      <div class="jstep">
+        <div class="jstep-circle">🏢</div>
+        <div class="jstep-label">At Station</div>
+      </div>
+      <div class="jstep-line"></div>
+      <div class="jstep">
+        <div class="jstep-circle">✅</div>
+        <div class="jstep-label">Vote Cast</div>
+      </div>
+    </div>
+
+    <!-- Action Cards -->
+    <div class="content-grid">
+      <div class="action-big-card primary">
+        <div class="action-big-icon">🗺️</div>
+        <div class="action-big-body">
+          <div class="action-big-title">Find My Polling Booth</div>
+          <div class="action-big-desc">Zilla Parishad School, Guntur West · Room 4 · 8 min walk</div>
+          <button class="cta-btn">📍 Open Map Directions</button>
+        </div>
+      </div>
+      <div class="action-big-card">
+        <div class="action-big-icon">🖥️</div>
+        <div class="action-big-body">
+          <div class="action-big-title">Practice on EVM Simulator</div>
+          <div class="action-big-desc">First-time voter? Try our step-by-step EVM practice before heading to the booth.</div>
+          <button class="cta-btn" style="background:#000080">🎮 Launch Simulator</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map -->
+    <div class="map-card">
+      <div class="map-card-header">
+        <div class="map-card-title">📍 Your Booth — Zilla Parishad School, Guntur West</div>
+        <a class="map-link">Open in Google Maps ↗</a>
+      </div>
+      <div class="map-placeholder">
+        <span style="font-size:36px;opacity:0.3">🗺️</span>
+        <div class="map-placeholder-label">Interactive map loads on election day</div>
+      </div>
+    </div>
+
+    <!-- Accessibility Panel -->
+    <div class="acc-panel">
+      <div class="acc-panel-title">♿ Accessibility Settings</div>
+      <div class="acc-toggle-row">
+        <div class="acc-toggle-label">🔆 High Contrast Mode</div>
+        <div class="toggle on"></div>
+      </div>
+      <div class="acc-toggle-row">
+        <div class="acc-toggle-label">🔤 Large Text (24px)</div>
+        <div class="toggle"></div>
+      </div>
+      <div class="acc-toggle-row">
+        <div class="acc-toggle-label">🎤 Voice Input (STT)</div>
+        <div class="toggle on"></div>
+      </div>
+      <div class="acc-toggle-row">
+        <div class="acc-toggle-label">🔊 Read Aloud (TTS)</div>
+        <div class="toggle on"></div>
+      </div>
+      <div class="acc-toggle-row">
+        <div class="acc-toggle-label">🖋️ Dyslexia-Friendly Font</div>
+        <div class="toggle"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT CHAT PANEL -->
+  <div class="chat-panel">
+    <div class="chat-header">
+      <div class="ai-avatar">🤖</div>
+      <div class="ai-info">
+        <div class="ai-name">VoteSeva AI</div>
+        <div class="ai-status">● Online · Powered by Gemini</div>
+      </div>
+      <button class="tts-btn">🔊 Read Aloud</button>
+    </div>
+
+    <div class="chat-messages">
+      <div class="msg-user">My name is Priya Sharma, I'm from Guntur</div>
+      <div class="msg-ai">
+        <div class="msg-step">
+          <div class="msg-step-num">1</div>
+          <div class="msg-step-text"><strong>Voter Found!</strong> Booth: <em>Zilla Parishad School, Guntur West</em> · Serial: 247 · Part: 4</div>
+        </div>
+        <div class="msg-step">
+          <div class="msg-step-num">2</div>
+          <div class="msg-step-text">Walk approx 8 min. Follow the map above. Look for the <strong>orange ECI banner</strong> at the gate.</div>
+        </div>
+        <div class="msg-step">
+          <div class="msg-step-num">3</div>
+          <div class="msg-step-text">Tell the officer: <em>"Serial number 247, Part 4"</em></div>
+        </div>
+        <div class="msg-step">
+          <div class="msg-step-num">4</div>
+          <div class="msg-step-text">⚠️ Bring any valid photo ID. Polls close at 6 PM.</div>
+        </div>
+      </div>
+      <div class="msg-user">I lost my Voter ID card</div>
+      <div class="msg-ai">
+        ✅ <strong>You can still vote!</strong> Show any of these 12 alternatives: Aadhaar, PAN, Driving License, Passport, MGNREGA card...
+        <br><br>
+        Your name is in the voter list — that's what matters. 🙏
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="chat-input-row">
+        <input class="chat-input" type="text" placeholder="Ask anything about voting...">
+        <div class="mic-big">🎤</div>
+        <div class="send-btn">➤</div>
+      </div>
+      <div class="quick-chips">
+        <div class="chip">🗺️ Directions</div>
+        <div class="chip">🆔 No ID</div>
+        <div class="chip">🏢 At Booth</div>
+        <div class="chip">📋 EVM Help</div>
+        <div class="chip">🆘 SOS</div>
+        <div class="chip">📞 1950</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=390px">
+<title>VoteSeva Mobile UX</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f8fafc;
+    width: 390px;
+    min-height: 844px;
+    overflow-x: hidden;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    background: #000080;
+    color: #fff;
+    font-size: 11px;
+    padding: 8px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* HERO HEADER */
+  .hero {
+    background: linear-gradient(160deg, #000080 0%, #1a237e 60%, #138808 100%);
+    padding: 16px 18px 24px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: '🗳️';
+    position: absolute;
+    right: 16px;
+    top: 10px;
+    font-size: 52px;
+    opacity: 0.15;
+  }
+  .hero-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .logo-badge {
+    background: #FF9933;
+    border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text h1 { font-size: 17px; font-weight: 700; }
+  .logo-text p { font-size: 10px; opacity: 0.75; }
+
+  .hero-greeting { font-size: 13px; opacity: 0.85; margin-bottom: 6px; }
+  .hero-stage {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .stage-dot { width: 7px; height: 7px; border-radius: 50%; background: #FF9933; }
+
+  /* LANG PILLS */
+  .lang-bar {
+    background: #fff;
+    padding: 10px 16px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .lang-pill {
+    flex-shrink: 0;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1.5px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+    cursor: pointer;
+  }
+  .lang-pill.active {
+    background: #000080;
+    color: #fff;
+    border-color: #000080;
+  }
+
+  /* JOURNEY STEPS */
+  .journey {
+    background: #fff;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .journey-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+  }
+  .step-circle {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    border: 2px solid #e2e8f0;
+    background: #f8fafc;
+    color: #94a3b8;
+    z-index: 1;
+  }
+  .step.done .step-circle { background: #138808; border-color: #138808; color: #fff; }
+  .step.active .step-circle { background: #000080; border-color: #000080; color: #fff; box-shadow: 0 0 0 4px rgba(0,0,128,0.15); }
+  .step-label { font-size: 9px; color: #94a3b8; margin-top: 4px; text-align: center; font-weight: 600; }
+  .step.done .step-label, .step.active .step-label { color: #1e293b; }
+  .step-line {
+    flex: 1;
+    height: 2px;
+    background: #e2e8f0;
+    margin-top: -16px;
+  }
+  .step-line.done { background: #138808; }
+
+  /* ACTION CARDS */
+  .section { padding: 14px 16px; }
+  .section-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .action-card {
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .action-card:hover { border-color: #000080; box-shadow: 0 4px 12px rgba(0,0,128,0.12); transform: translateY(-1px); }
+  .action-card.primary { background: #000080; border-color: #000080; color: #fff; }
+  .action-card.orange { background: #fff7ed; border-color: #FF9933; }
+  .action-card.green { background: #f0fdf4; border-color: #138808; }
+  .action-icon { font-size: 26px; margin-bottom: 6px; }
+  .action-label { font-size: 11px; font-weight: 700; color: inherit; }
+  .action-sub { font-size: 9.5px; color: #94a3b8; margin-top: 2px; }
+  .action-card.primary .action-sub { color: rgba(255,255,255,0.65); }
+
+  /* CHAT AREA */
+  .chat-section { padding: 0 16px 14px; }
+  .chat-bubble {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px 16px 16px 4px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #1e293b;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .chat-step { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  .step-num {
+    flex-shrink: 0;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #000080;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-text { font-size: 11.5px; color: #1e293b; line-height: 1.4; }
+
+  /* INPUT BAR */
+  .input-area {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    padding: 10px 14px;
+  }
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    border-radius: 24px;
+    padding: 8px 12px;
+  }
+  .input-field {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    font-size: 13px;
+    color: #1e293b;
+  }
+  .input-field::placeholder { color: #94a3b8; }
+  .mic-btn {
+    width: 34px; height: 34px;
+    background: #000080;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .acc-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    justify-content: center;
+  }
+  .acc-btn {
+    font-size: 9px;
+    font-weight: 600;
+    color: #64748b;
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+  }
+  .acc-btn.on { background: #000080; color: #fff; border-color: #000080; }
+</style>
+</head>
+<body>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <span>9:41</span>
+  <span>📶 🔋</span>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-top">
+    <div class="logo-badge">🗳️</div>
+    <div class="logo-text">
+      <h1>VoteSeva</h1>
+      <p>India Election Assistant</p>
+    </div>
+  </div>
+  <div class="hero-greeting">Namaste! Ready to cast your vote? 🙏</div>
+  <div class="hero-stage">
+    <span class="stage-dot"></span>
+    Election Day · Voting Open Till 6 PM
+  </div>
+</div>
+
+<!-- LANGUAGE BAR -->
+<div class="lang-bar">
+  <div class="lang-pill active">EN</div>
+  <div class="lang-pill">हिं</div>
+  <div class="lang-pill">తె</div>
+  <div class="lang-pill">த</div>
+  <div class="lang-pill">ಕ</div>
+  <div class="lang-pill">म</div>
+</div>
+
+<!-- JOURNEY STEPS -->
+<div class="journey">
+  <div class="journey-label">Your Voting Journey</div>
+  <div class="steps">
+    <div class="step done">
+      <div class="step-circle">✓</div>
+      <div class="step-label">Check Roll</div>
+    </div>
+    <div class="step-line done"></div>
+    <div class="step active">
+      <div class="step-circle">📍</div>
+      <div class="step-label">Find Booth</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-circle">🏢</div>
+      <div class="step-label">At Station</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-circle">✅</div>
+      <div class="step-label">Vote Cast</div>
+    </div>
+  </div>
+</div>
+
+<!-- ACTION CARDS -->
+<div class="section">
+  <div class="section-title">What do you need?</div>
+  <div class="action-grid">
+    <div class="action-card primary">
+      <div class="action-icon">🗺️</div>
+      <div class="action-label">Find My Booth</div>
+      <div class="action-sub">Get directions now</div>
+    </div>
+    <div class="action-card green">
+      <div class="action-icon">🪪</div>
+      <div class="action-label">Check My Name</div>
+      <div class="action-sub">Voter roll search</div>
+    </div>
+    <div class="action-card orange">
+      <div class="action-icon">🖥️</div>
+      <div class="action-label">EVM Practice</div>
+      <div class="action-sub">Try the simulator</div>
+    </div>
+    <div class="action-card">
+      <div class="action-icon">🆔</div>
+      <div class="action-label">Lost Voter ID</div>
+      <div class="action-sub">12 alternatives</div>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT AREA -->
+<div class="chat-section">
+  <div class="section-title">VoteSeva says</div>
+  <div class="chat-bubble">
+    <div class="chat-step">
+      <div class="step-num">1</div>
+      <div class="step-text"><strong>Your booth:</strong> Zilla Parishad School, Guntur West — Room 4</div>
+    </div>
+    <div class="chat-step">
+      <div class="step-num">2</div>
+      <div class="step-text">Walk approx. 8 min from Gandhi Nagar. Map is open below.</div>
+    </div>
+    <div class="chat-step">
+      <div class="step-num">3</div>
+      <div class="step-text">Tell the officer: <em>"My Serial No. is 247"</em></div>
+    </div>
+  </div>
+</div>
+
+<!-- INPUT BAR -->
+<div class="input-area">
+  <div class="input-row">
+    <span>🔍</span>
+    <input class="input-field" type="text" placeholder="Type or speak your question...">
+    <div class="mic-btn">🎤</div>
+  </div>
+  <div class="acc-row">
+    <div class="acc-btn on">🔆 High Contrast</div>
+    <div class="acc-btn">🔤 Large Text</div>
+    <div class="acc-btn">🌙 Dark</div>
+    <div class="acc-btn">🆘 SOS</div>
+  </div>
+</div>
+
+</body>
+</html>
